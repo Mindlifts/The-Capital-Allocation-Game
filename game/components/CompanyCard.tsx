@@ -1,47 +1,57 @@
 import { archetypeMap, traitMap } from "../config";
-import type { CompanyState, TraitKey } from "../types";
+import { investorTakeaway, nextHiddenTrait, riskLevel } from "../engine";
+import type { CompanyState, PlayerActionType, TraitKey, TurnPhase } from "../types";
 import { MiniChart } from "./MiniChart";
 
 interface CompanyCardProps {
   company: CompanyState;
   positionValue: number;
   availableCapital: number;
-  attention: number;
+  resources: { attention: number; credibility: number; patience: number; optionality: number };
+  phase: TurnPhase;
   selected: boolean;
+  actionUsed: boolean;
   onSelect: () => void;
   onAllocate: (value: number) => void;
-  onInvestigate: () => void;
+  onAction: (type: PlayerActionType) => void;
 }
 
 export function CompanyCard({
   company,
   positionValue,
   availableCapital,
-  attention,
+  resources,
+  phase,
   selected,
+  actionUsed,
   onSelect,
   onAllocate,
-  onInvestigate,
+  onAction,
 }: CompanyCardProps) {
   const archetype = archetypeMap[company.archetype];
-  const move = ((company.price - company.previousPrice) / company.previousPrice) * 100;
+  const move = company.recentChange * 100;
   const allTraits = Object.keys(company.traits) as TraitKey[];
   const hiddenCount = allTraits.length - company.revealedTraits.length;
+  const hiddenTrait = nextHiddenTrait(company);
   const maxPosition = positionValue + availableCapital;
+  const ownership = positionValue > 0 ? Math.round(positionValue) : 0;
 
   return (
     <article
-      className={`company-card ${selected ? "selected" : ""}`}
+      className={`company-card collectible-card ${selected ? "selected" : ""} ${positionValue > 0 ? "owned" : ""}`}
       onClick={onSelect}
       style={{ "--company-accent": archetype.color } as React.CSSProperties}
     >
+      <div className="card-rarity-line">
+        <span>{archetype.label}</span>
+        <span>{company.commodity} // {company.ticker}</span>
+      </div>
+
       <div className="company-topline">
-        <div className="company-symbol">
-          <span>{company.ticker.slice(0, 2)}</span>
-        </div>
+        <div className="company-symbol"><span>{company.ticker.slice(0, 2)}</span></div>
         <div className="company-name">
           <h3>{company.name}</h3>
-          <span>{company.ticker} · {company.commodity}</span>
+          <span>{company.tagline}</span>
         </div>
         <div className="company-price">
           <strong>${company.price.toFixed(2)}</strong>
@@ -51,16 +61,21 @@ export function CompanyCard({
         </div>
       </div>
 
-      <div className="archetype-row">
-        <span className="archetype-badge">{archetype.label}</span>
-        <span className="volatility">{company.volatility >= .2 ? "Wild" : company.volatility >= .14 ? "Volatile" : "Steady"}</span>
+      <div className="card-art">
+        <div className="strata strata-one" />
+        <div className="strata strata-two" />
+        <span>{company.commodity.slice(0, 1)}</span>
+        <MiniChart values={company.history} />
       </div>
 
-      <p className="tagline">{company.tagline}</p>
-      <MiniChart values={company.history} />
+      <div className="ownership-strip">
+        <span>Your ownership <b>{ownership ? `$${ownership}` : "No position"}</b></span>
+        <span>Hype <b>{company.traits.marketHype}/10</b></span>
+        <span>Risk <b className={`risk-${riskLevel(company).toLowerCase()}`}>{riskLevel(company)}</b></span>
+      </div>
 
       <div className="trait-grid">
-        {company.revealedTraits.slice(0, 4).map((key) => {
+        {company.revealedTraits.slice(0, 5).map((key) => {
           const trait = traitMap[key];
           const value = company.traits[key];
           const favorable = trait.positive ? value >= 6 : value <= 4;
@@ -73,16 +88,26 @@ export function CompanyCard({
         })}
         {hiddenCount > 0 && (
           <div className="trait unknown-trait">
-            <span>Unknown</span>
+            <span>Hidden DNA</span>
             <strong>? × {hiddenCount}</strong>
           </div>
         )}
       </div>
 
-      {selected && (
+      <div className="takeaway">
+        <span>INVESTOR TAKEAWAY</span>
+        <p>{investorTakeaway(company)}</p>
+      </div>
+
+      <div className="recent-change">
+        <span>{company.lastChangeReason}</span>
+        <b className={move >= 0 ? "gain" : "loss"}>{move ? `${move > 0 ? "+" : ""}${move.toFixed(1)}%` : "Opening"}</b>
+      </div>
+
+      {selected && phase === "allocate" && (
         <div className="allocation-panel" onClick={(event) => event.stopPropagation()}>
           <div className="allocation-label">
-            <span>Your conviction</span>
+            <span>Set position size</span>
             <strong>${Math.round(positionValue)}</strong>
           </div>
           <input
@@ -95,22 +120,33 @@ export function CompanyCard({
             onChange={(event) => onAllocate(Number(event.target.value))}
           />
           <div className="quick-actions">
-            {[0, 100, 250].map((amount) => (
-              <button
-                type="button"
-                key={amount}
-                onClick={() => onAllocate(Math.min(maxPosition, amount))}
-              >
-                {amount === 0 ? "Exit" : `$${amount}`}
-              </button>
-            ))}
-            <button
-              type="button"
-              className="investigate-button"
-              disabled={attention < 1 || hiddenCount === 0}
-              onClick={onInvestigate}
-            >
-              ◎ Investigate
+            <button type="button" onClick={() => onAllocate(Math.max(0, positionValue - 100))}>Trim $100</button>
+            <button type="button" onClick={() => onAllocate(Math.min(maxPosition, positionValue + 100))}>Add $100</button>
+            <button type="button" onClick={() => onAllocate(Math.min(maxPosition, positionValue + 250))}>Add $250</button>
+            <button type="button" onClick={() => onAllocate(0)}>Exit</button>
+          </div>
+        </div>
+      )}
+
+      {selected && phase === "action" && (
+        <div className="action-panel" onClick={(event) => event.stopPropagation()}>
+          <p>Choose your one edge for this turn.</p>
+          <div className="card-actions">
+            <button disabled={actionUsed || !hiddenTrait || resources.attention < 2} onClick={() => onAction("investigate")}>
+              <b>◎ Investigate</b>
+              <span>2 Attention · reveal {hiddenTrait ? traitMap[hiddenTrait].label : "DNA"}</span>
+            </button>
+            <button disabled={actionUsed || resources.credibility < 2} onClick={() => onAction("credibility")}>
+              <b>◆ Private Access</b>
+              <span>2 Credibility · improve entry</span>
+            </button>
+            <button disabled={actionUsed || resources.patience < 2 || positionValue <= 0} onClick={() => onAction("patience")}>
+              <b>◴ Hold Conviction</b>
+              <span>2 Patience · cushion downside</span>
+            </button>
+            <button disabled={actionUsed || resources.optionality < 2} onClick={() => onAction("optionality")}>
+              <b>✦ Asymmetric Bet</b>
+              <span>2 Optionality · amplify outcome</span>
             </button>
           </div>
         </div>
