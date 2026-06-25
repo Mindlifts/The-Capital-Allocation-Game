@@ -1,0 +1,8 @@
+allowBuilds:
+  sharp: true
+confirmModulesPurge: false
+packages:
+  - "."
+
+onlyBuiltDependencies:
+  - sharp
