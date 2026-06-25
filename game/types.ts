@@ -68,9 +68,14 @@ export interface CompanyState extends CompanyConfig {
   price: number;
   previousPrice: number;
   revealedTraits: TraitKey[];
+  hiddenTraitOrder: TraitKey[];
   history: number[];
   momentum: number;
   lastChangeReason: string;
+  recentChange: number;
+  convictionTurns: number;
+  protectedThisTurn: boolean;
+  asymmetricBet: boolean;
 }
 
 export interface Philosophy {
@@ -121,6 +126,42 @@ export interface TurnLog {
   tone: "positive" | "negative" | "neutral";
 }
 
+export type TurnPhase =
+  | "review"
+  | "allocate"
+  | "action"
+  | "event"
+  | "result"
+  | "ended";
+
+export type PlayerActionType =
+  | "investigate"
+  | "credibility"
+  | "patience"
+  | "optionality"
+  | "hold";
+
+export interface PlayerAction {
+  type: PlayerActionType;
+  companyId?: string;
+  title: string;
+  description: string;
+  turn: number;
+}
+
+export interface BehaviorStats {
+  investigations: number;
+  hypeBuys: number;
+  valueBuys: number;
+  builderBuys: number;
+  trims: number;
+  panicSells: number;
+  holds: number;
+  optionalityBets: number;
+  credibilityPlays: number;
+  patiencePlays: number;
+}
+
 export interface InvestmentRecord {
   companyId: string;
   costBasis: number;
@@ -128,7 +169,7 @@ export interface InvestmentRecord {
 }
 
 export interface GameState {
-  phase: "playing" | "event" | "ended";
+  phase: TurnPhase;
   turn: number;
   maxTurns: number;
   philosophy: PhilosophyKey;
@@ -139,14 +180,36 @@ export interface GameState {
   records: InvestmentRecord[];
   logs: TurnLog[];
   currentEvent: ResolvedEvent | null;
+  lastAction: PlayerAction | null;
+  actionUsed: boolean;
+  allocationChanged: boolean;
+  turnStartValue: number;
+  behavior: BehaviorStats;
+  decisions: PlayerAction[];
+  runId: number;
   legacyScore: number;
   seed: number;
+}
+
+export interface Mover {
+  companyId: string;
+  name: string;
+  ticker: string;
+  changePercent: number;
 }
 
 export interface ResolvedEvent {
   event: GameEvent;
   targetIds: string[];
   impactLines: string[];
+  mechanicalEffect: string;
+  portfolioBefore: number;
+  portfolioAfter: number;
+  portfolioChange: number;
+  bestMover: Mover;
+  worstMover: Mover;
+  lessonHint: string;
+  philosophyEffect: string;
 }
 
 export interface GameSummary {
@@ -155,6 +218,9 @@ export interface GameSummary {
   legacyScore: number;
   bestInvestment: string;
   worstInvestment: string;
-  style: string;
+  bestDecision: string;
+  worstDecision: string;
+  dominantBehavior: string;
+  investorArchetype: string;
   lesson: string;
 }
