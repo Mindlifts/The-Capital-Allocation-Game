@@ -42,6 +42,21 @@ export type PhilosophyIdentityKey =
   | "macro-thinker"
   | "compounder";
 
+export type InvestorCardRarity = "Common" | "Rare" | "Epic" | "Legendary";
+
+export type InvestorCardEffect =
+  | "builder"
+  | "contrarian"
+  | "empire"
+  | "momentum"
+  | "compounder"
+  | "risk"
+  | "story"
+  | "allocator"
+  | "macro"
+  | "optionality"
+  | "discovery";
+
 export type Resources = Record<ResourceKey, number>;
 export type CompanyTraits = Record<TraitKey, number>;
 
@@ -102,6 +117,18 @@ export interface Philosophy {
   accent: string;
 }
 
+export interface InvestorCard {
+  id: string;
+  title: string;
+  shortLore: string;
+  passiveAbility: string;
+  drawback: string;
+  synergies: string[];
+  rarity: InvestorCardRarity;
+  icon: string;
+  effect: InvestorCardEffect;
+}
+
 export interface EventEffect {
   trait?: TraitKey;
   traitDelta?: number;
@@ -139,6 +166,7 @@ export interface TurnLog {
 }
 
 export type TurnPhase =
+  | "draft"
   | "observe"
   | "think"
   | "choose"
@@ -203,6 +231,9 @@ export interface GameState {
   maxTurns: number;
   philosophy: PhilosophyKey;
   resources: Resources;
+  investorDeck: InvestorCard[];
+  draftOffer: InvestorCard[];
+  draftedCardIds: string[];
   initialCapital: number;
   companies: CompanyState[];
   portfolio: PortfolioPosition[];

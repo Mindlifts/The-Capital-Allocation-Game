@@ -88,6 +88,18 @@ export function EndScreen({ state, onRestart }: { state: GameState; onRestart: (
           </div>
         </div>
 
+        <div className="final-deck">
+          <span>YOUR PHILOSOPHY DECK</span>
+          <div>
+            {state.investorDeck.map((card) => (
+              <article className={`mini-investor-card mini-${card.rarity.toLowerCase()}`} key={card.id}>
+                <span>{card.icon}</span>
+                <div><b>{card.title}</b><small>{card.rarity} · {card.passiveAbility}</small></div>
+              </article>
+            ))}
+          </div>
+        </div>
+
         <div className="decision-report">
           <div><span>BEST DECISION</span><strong>{summary.bestDecision}</strong></div>
           <div><span>WORST DECISION</span><strong>{summary.worstDecision}</strong></div>
