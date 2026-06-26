@@ -7,6 +7,8 @@ import type {
   GameSummary,
   InvestmentRecord,
   Mover,
+  PhilosophyIdentityKey,
+  PhilosophyProgression,
   PhilosophyKey,
   PlayerAction,
   PlayerActionType,
@@ -146,6 +148,116 @@ export function positionValue(state: GameState, companyId: string) {
   const position = state.portfolio.find((item) => item.companyId === companyId);
   const company = state.companies.find((item) => item.id === companyId);
   return (position?.shares ?? 0) * (company?.price ?? 0);
+}
+
+const identityMeta: Record<PhilosophyIdentityKey, { name: string; description: string }> = {
+  builder: {
+    name: "Builder",
+    description: "You trust execution, craft, and the people who can turn uncertainty into finished reality.",
+  },
+  contrarian: {
+    name: "Contrarian",
+    description: "You look for neglected strength and prefer being early to being applauded.",
+  },
+  "empire-builder": {
+    name: "Empire Builder",
+    description: "You spread influence across a map and build a system instead of one perfect bet.",
+  },
+  "momentum-trader": {
+    name: "Momentum Trader",
+    description: "You respect narrative velocity and move when belief itself becomes a force.",
+  },
+  "optionality-hunter": {
+    name: "Optionality Hunter",
+    description: "You seek asymmetric doors: situations where one discovery can change the whole run.",
+  },
+  "macro-thinker": {
+    name: "Macro Thinker",
+    description: "You read cycles, exposure, infrastructure, and the wider world behind each character.",
+  },
+  compounder: {
+    name: "Compounder",
+    description: "You prefer durability, patience, and resilient machines that keep working while drama burns out.",
+  },
+};
+
+export function inferPhilosophyProgression(state: GameState): PhilosophyProgression {
+  const committed = state.portfolio
+    .map((position) => {
+      const company = state.companies.find((item) => item.id === position.companyId);
+      return company ? { company, value: position.shares * company.price } : null;
+    })
+    .filter((item): item is { company: CompanyState; value: number } => Boolean(item));
+  const committedValue = Math.max(1, committed.reduce((total, item) => total + item.value, 0));
+  const exposure = (predicate: (company: CompanyState) => boolean) =>
+    committed.reduce((total, item) => total + (predicate(item.company) ? item.value : 0), 0) / committedValue;
+  const avgTrait = (trait: TraitKey) =>
+    committed.reduce((total, item) => total + item.company.traits[trait] * (item.value / committedValue), 0);
+  const behavior = state.behavior;
+  const concentration = committed.length <= 2 && committedValue > 1 ? 2 : 0;
+  const diversification = committed.length >= 4 ? 3 : committed.length >= 3 ? 1 : 0;
+  const scores: Record<PhilosophyIdentityKey, number> = {
+    builder:
+      behavior.builderBuys * 4 +
+      behavior.patiencePlays * 2 +
+      behavior.holds * 1.5 +
+      exposure((company) => company.archetype === "mine-builder-mafia" || company.traits.executionSkill >= 8) * 10,
+    contrarian:
+      behavior.valueBuys * 4 +
+      exposure((company) => company.traits.marketHype <= 4 && company.traits.balanceSheet >= 6) * 12 +
+      Math.max(0, 6 - avgTrait("marketHype")) +
+      behavior.investigations,
+    "empire-builder":
+      diversification * 3 +
+      behavior.credibilityPlays * 2 +
+      exposure((company) => company.archetype === "infrastructure-winner" || company.archetype === "mine-builder-mafia") * 8 +
+      committed.length,
+    "momentum-trader":
+      behavior.hypeBuys * 4 +
+      behavior.trims * 1.5 +
+      exposure((company) => company.traits.marketHype >= 7 || company.recentChange > 0.08) * 12 -
+      behavior.holds,
+    "optionality-hunter":
+      behavior.optionalityBets * 5 +
+      exposure((company) => company.traits.optionality >= 8 || company.archetype === "lottery-ticket" || company.archetype === "future-takeover") * 12 +
+      concentration,
+    "macro-thinker":
+      exposure((company) => company.traits.commodityExposure >= 8 || company.archetype === "sleeping-giant") * 10 +
+      exposure((company) => company.traits.infrastructure >= 8 || company.traits.politicalRisk >= 6) * 5 +
+      behavior.investigations * 1.2,
+    compounder:
+      behavior.holds * 3 +
+      behavior.patiencePlays * 2 +
+      exposure((company) => company.archetype === "cash-cow" || company.archetype === "hidden-royalty" || company.traits.balanceSheet >= 8) * 12 -
+      behavior.hypeBuys,
+  };
+  const identities = (Object.entries(scores) as Array<[PhilosophyIdentityKey, number]>)
+    .map(([key, score]) => ({ key, score: Math.max(0, Number(score.toFixed(1))), ...identityMeta[key] }))
+    .sort((a, b) => b.score - a.score);
+  const primary = identities[0];
+  const runnerUp = identities[1] ?? identities[0];
+  const strengths: string[] = [];
+  const weaknesses: string[] = [];
+  if (behavior.investigations >= 2) strengths.push("You paid for information before demanding certainty.");
+  if (behavior.holds + behavior.patiencePlays >= 3) strengths.push("You showed patience when uncertainty tried to hurry you.");
+  if (behavior.valueBuys >= 2) strengths.push("You noticed neglected strength before it became obvious.");
+  if (behavior.builderBuys >= 2) strengths.push("You recognized execution quality and backed builders.");
+  if (behavior.optionalityBets >= 2) strengths.push("You understood that some doors are worth more than they look.");
+  if (committed.length >= 4) strengths.push("You built a system instead of relying on one perfect call.");
+  if (!strengths.length) strengths.push("You preserved flexibility while your philosophy was still forming.");
+  if (behavior.hypeBuys > behavior.valueBuys + 1) weaknesses.push("You were vulnerable to charisma and rising attention.");
+  if (behavior.panicSells > 0) weaknesses.push("You paid for emotional certainty after volatility had already arrived.");
+  if (behavior.optionalityBets >= 3 && state.wisdomScore < 12) weaknesses.push("You reached for asymmetry faster than you built survival.");
+  if (behavior.investigations === 0 && state.turn > 3) weaknesses.push("You often committed before reducing the fog.");
+  if (committed.length <= 1 && state.turn > 5) weaknesses.push("Your philosophy became fragile because it depended on too few outcomes.");
+  if (!weaknesses.length) weaknesses.push("Your main risk was under-defining your edge before the world reacted.");
+  const gap = primary.score - runnerUp.score;
+  const evolution = primary.score < 5
+    ? "Still forming. Your choices have not hardened into a clear doctrine yet."
+    : gap < 3
+      ? `Hybrid path: ${primary.name} with a visible ${runnerUp.name} undertone.`
+      : `Clear drift toward ${primary.name}. Your repeated choices are becoming an identity.`;
+  return { primary, runnerUp, identities, strengths: strengths.slice(0, 3), weaknesses: weaknesses.slice(0, 3), evolution };
 }
 
 export function nextHiddenTrait(company: CompanyState) {
@@ -628,6 +740,7 @@ export function summarizeGame(state: GameState): GameSummary {
     returnPercent: ((finalValue - state.initialCapital) / state.initialCapital) * 100,
     legacyScore: Math.max(0, state.legacyScore + Math.round((finalValue - state.initialCapital) / 18)),
     wisdomScore: state.wisdomScore,
+    philosophyProgression: inferPhilosophyProgression(state),
     bestInvestment: name(results[0]?.companyId),
     worstInvestment: name(results[results.length - 1]?.companyId),
     bestDecision,
