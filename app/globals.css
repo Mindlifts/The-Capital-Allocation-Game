@@ -1687,10 +1687,81 @@ body::before {
 
 @media (max-width: 560px) {
   .focused-resource-header {
-    padding: 10px 12px;
+    padding: 8px 10px 10px;
+    gap: 8px;
+    grid-template-columns: 1fr auto;
   }
   .focused-resource-header .brand-block {
     display: none;
+  }
+  .focused-resource-header .resource-bar {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+    min-height: 0;
+    border-top: 0;
+    overflow: visible;
+  }
+  .focused-resource-header .resource {
+    min-height: 54px;
+    padding: 7px 3px 6px;
+    display: grid;
+    grid-template-rows: auto auto auto;
+    justify-items: center;
+    align-items: center;
+    gap: 1px;
+    border: 1px solid rgba(212,175,55,.18);
+    border-radius: 10px;
+    background: rgba(7, 10, 12, .78);
+  }
+  .focused-resource-header .resource::before {
+    display: none;
+  }
+  .focused-resource-header .resource-icon {
+    width: auto;
+    height: auto;
+    color: var(--gold);
+    font: 700 8px var(--mono);
+    letter-spacing: .02em;
+    text-shadow: none;
+    opacity: .72;
+  }
+  .focused-resource-header .resource span:last-child {
+    display: contents;
+  }
+  .focused-resource-header .resource small {
+    display: block;
+    order: 2;
+    color: #aeb8b5;
+    font: 700 8px var(--mono);
+    letter-spacing: .02em;
+    text-transform: uppercase;
+  }
+  .focused-resource-header .resource strong {
+    order: 3;
+    max-width: 100%;
+    color: #fff3d2;
+    font: 800 13px var(--mono);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .focused-resource-header .turn-block {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    padding: 0;
+    text-align: right;
+  }
+  .focused-resource-header .turn-block > span {
+    font-size: 7px;
+  }
+  .focused-resource-header .turn-block strong {
+    font-size: 24px;
+    margin-top: 1px;
   }
   .focused-command,
   .opportunity-scene,
@@ -1736,10 +1807,6 @@ body::before {
     padding: 14px;
   }
   .market-header { position: sticky; top: 0; }
-  .resource { padding: 0 5px; gap: 4px; justify-content: center; }
-  .resource-icon { font-size: 11px; }
-  .resource small { display: none; }
-  .resource strong { font-size: 10px; }
   .turn-stepper { top: 128px; overflow: hidden; }
   .turn-stepper > div { gap: 4px; }
   .turn-stepper i { width: 19px; height: 19px; font-size: 7px; }
