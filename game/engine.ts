@@ -6,9 +6,11 @@ import type {
   GameEvent,
   GameState,
   GameSummary,
+  InvestmentMemo,
   InvestmentRecord,
   InvestorCard,
   Mover,
+  OpportunityActionType,
   PhilosophyIdentityKey,
   PhilosophyProgression,
   PhilosophyKey,
@@ -84,6 +86,14 @@ function generateDraftOffer(seed: number, draftedIds: string[], count = 3) {
   return { offer, seed: nextSeed };
 }
 
+function generateRoundOpportunityIds(companyStates: CompanyState[], seed: number, count = 3) {
+  const shuffledCompanies = shuffled(companyStates, seed);
+  return {
+    ids: shuffledCompanies.items.slice(0, Math.min(count, companyStates.length)).map((company) => company.id),
+    seed: shuffledCompanies.seed,
+  };
+}
+
 function hasCard(state: GameState, effect: InvestorCard["effect"]) {
   return state.investorDeck.some((card) => card.effect === effect);
 }
@@ -156,6 +166,8 @@ export function initializeGame(
   });
   const initialDraft = generateDraftOffer(nextSeed, []);
   nextSeed = initialDraft.seed;
+  const firstRound = generateRoundOpportunityIds(companyStates, nextSeed);
+  nextSeed = firstRound.seed;
 
   return {
     phase: "draft",
@@ -183,6 +195,10 @@ export function initializeGame(
     }],
     moments: [moment("unlock", "Mental Model Draft", "Pick a card to start shaping your philosophy before the world tests it.", "neutral")],
     currentEvent: null,
+    roundOpportunityIds: firstRound.ids,
+    opportunityIndex: 0,
+    pendingOpportunityAction: null,
+    decisionMemos: [],
     lastAction: null,
     actionUsed: false,
     allocationChanged: false,
@@ -347,6 +363,219 @@ export function riskLevel(company: CompanyState) {
   return score >= 18 ? "Extreme" : score >= 13 ? "High" : score >= 9 ? "Medium" : "Low";
 }
 
+export const OPPORTUNITY_REASONS: Record<OpportunityActionType, string[]> = {
+  invest: [
+    "Backing strong builders.",
+    "Buying neglected value.",
+    "Taking asymmetric optionality.",
+    "Following momentum before the crowd.",
+  ],
+  ignore: [
+    "Too much hype, not enough substance.",
+    "Balance sheet risk is too high.",
+    "Management quality is unclear.",
+    "Better opportunities elsewhere.",
+  ],
+  research: [
+    "Need to reveal management quality.",
+    "Need to understand political risk.",
+    "Need to verify resource quality.",
+    "Need to check dilution risk.",
+  ],
+  watchlist: [
+    "Interesting, but too early.",
+    "Need a better entry.",
+    "Waiting for confirmation.",
+    "Resource budget says no.",
+  ],
+  hold: [
+    "Original thesis still intact.",
+    "Volatility is noise.",
+    "Waiting for catalyst.",
+    "Not enough new information.",
+  ],
+  trim: [
+    "Position became too hyped.",
+    "Risk/reward worsened.",
+    "Need capital for better setup.",
+    "Taking some gains without killing the thesis.",
+  ],
+  sell: [
+    "Thesis broken.",
+    "Position became too hyped.",
+    "Risk/reward worsened.",
+    "Need capital for better setup.",
+  ],
+};
+
+export function currentOpportunity(state: GameState) {
+  const id = state.roundOpportunityIds[state.opportunityIndex];
+  return state.companies.find((company) => company.id === id) ?? state.companies[0];
+}
+
+function decisionSnapshot(state: GameState, company: CompanyState) {
+  const position = positionValue(state, company.id);
+  return {
+    price: company.price,
+    archetype: company.archetype,
+    industry: company.industry,
+    region: company.region,
+    hype: company.traits.marketHype,
+    risk: riskLevel(company),
+    visibleTraits: company.revealedTraits.slice(0, 5).map((key) => ({
+      key,
+      label: traitMap[key].label,
+      value: company.traits[key],
+    })),
+    hiddenTraitCount: company.hiddenTraitOrder.filter((key) => !company.revealedTraits.includes(key)).length,
+    positionValue: position,
+    takeaway: investorTakeaway(company),
+  };
+}
+
+function actionTitle(action: OpportunityActionType) {
+  const titles: Record<OpportunityActionType, string> = {
+    invest: "Invested",
+    ignore: "Ignored",
+    research: "Researched",
+    watchlist: "Added to watchlist",
+    hold: "Held",
+    trim: "Trimmed",
+    sell: "Sold",
+  };
+  return titles[action];
+}
+
+export function chooseOpportunityAction(state: GameState, action: OpportunityActionType): GameState {
+  if (state.phase !== "opportunity") return state;
+  const company = currentOpportunity(state);
+  if (!company) return state;
+  const owned = positionValue(state, company.id) > 0;
+  if ((action === "hold" || action === "trim" || action === "sell") && !owned) return state;
+  if (action === "research" && (state.resources.attention < 1 || !nextHiddenTrait(company))) return state;
+  return {
+    ...state,
+    phase: "reason",
+    pendingOpportunityAction: action,
+    moments: [moment("critical", `${actionTitle(action)}?`, `Choose the reason. That sentence becomes your automatic memo on ${company.name}.`, "neutral")],
+  };
+}
+
+export function reviseOpportunityAction(state: GameState): GameState {
+  if (state.phase !== "reason") return state;
+  return { ...state, phase: "opportunity", pendingOpportunityAction: null };
+}
+
+export function confirmOpportunityReason(state: GameState, reason: string): GameState {
+  if (state.phase !== "reason" || !state.pendingOpportunityAction) return state;
+  const company = currentOpportunity(state);
+  if (!company) return state;
+  const action = state.pendingOpportunityAction;
+  const snapshot = decisionSnapshot(state, company);
+  const memo: InvestmentMemo = {
+    id: `memo-${state.turn}-${state.opportunityIndex}-${company.id}-${Date.now()}`,
+    turn: state.turn,
+    opportunityIndex: state.opportunityIndex + 1,
+    companyId: company.id,
+    companyName: company.name,
+    action,
+    reason,
+    snapshot,
+  };
+
+  let next: GameState = {
+    ...state,
+    pendingOpportunityAction: null,
+    decisionMemos: [...state.decisionMemos, memo],
+    decisions: [...state.decisions, {
+      type: action === "research" ? "investigate" : action === "hold" ? "hold" : "optionality",
+      companyId: company.id,
+      title: `${actionTitle(action)} ${company.name}`,
+      description: reason,
+      turn: state.turn,
+    }],
+    logs: [{
+      id: `memo-${state.turn}-${company.id}-${action}`,
+      turn: state.turn,
+      title: `${actionTitle(action)} ${company.name}`,
+      body: reason,
+      tone: action === "ignore" || action === "watchlist" ? "neutral" : action === "sell" ? "negative" : "positive",
+    }, ...state.logs],
+    moments: [moment("discovery", "Memo Saved", `${reason} The world will now grade that belief.`, "neutral")],
+  };
+
+  const currentValue = positionValue(next, company.id);
+  if (action === "invest") {
+    const pledge = Math.min(next.resources.capital, currentValue > 0 ? 125 : 250);
+    if (pledge > 0) next = setPositionValue({ ...next, phase: "commit" }, company.id, currentValue + pledge);
+  }
+  if (action === "trim") {
+    next = setPositionValue({ ...next, phase: "commit" }, company.id, currentValue * 0.5);
+  }
+  if (action === "sell") {
+    next = setPositionValue({ ...next, phase: "commit" }, company.id, 0);
+  }
+  if (action === "research") {
+    const freshCompany = next.companies.find((item) => item.id === company.id) ?? company;
+    const trait = nextHiddenTrait(freshCompany);
+    if (trait && next.resources.attention >= 1) {
+      next = {
+        ...next,
+        resources: { ...next.resources, attention: next.resources.attention - 1 },
+        companies: next.companies.map((item) => item.id === company.id
+          ? { ...item, revealedTraits: [...item.revealedTraits, trait] }
+          : item),
+        behavior: { ...next.behavior, investigations: next.behavior.investigations + 1 },
+        wisdomScore: next.wisdomScore + 2,
+        moments: [moment(
+          freshCompany.traits[trait] >= 9 ? "legendary" : "discovery",
+          freshCompany.traits[trait] >= 9 ? "Legendary Reveal" : "Trait Revealed",
+          `${freshCompany.name}: ${traitMap[trait].label} is ${freshCompany.traits[trait]}/10.`,
+          "positive",
+        )],
+      };
+    }
+  }
+  if (action === "hold") {
+    next = {
+      ...next,
+      behavior: { ...next.behavior, holds: next.behavior.holds + 1 },
+      companies: next.companies.map((item) => item.id === company.id ? { ...item, convictionTurns: item.convictionTurns + 1 } : item),
+      wisdomScore: next.wisdomScore + 1,
+    };
+  }
+  if (action === "watchlist") {
+    next = { ...next, wisdomScore: next.wisdomScore + 1 };
+  }
+
+  const lastAction: PlayerAction = {
+    type: action === "research" ? "investigate" : action === "hold" ? "hold" : "optionality",
+    companyId: company.id,
+    title: `${actionTitle(action)} ${company.name}`,
+    description: `${reason} (${actionTitle(action)} during opportunity ${state.opportunityIndex + 1}/3.)`,
+    turn: state.turn,
+  };
+  next = { ...next, lastAction, actionUsed: true };
+
+  const nextIndex = state.opportunityIndex + 1;
+  if (nextIndex < next.roundOpportunityIds.length) {
+    return {
+      ...next,
+      phase: "opportunity",
+      opportunityIndex: nextIndex,
+      pendingOpportunityAction: null,
+    };
+  }
+
+  return drawEvent({
+    ...next,
+    phase: "commit",
+    opportunityIndex: nextIndex,
+    actionUsed: true,
+    lastAction,
+  });
+}
+
 export function beginAllocation(state: GameState): GameState {
   if (state.phase !== "observe") return state;
   return { ...state, phase: "think" };
@@ -383,7 +612,7 @@ export function draftInvestorCard(state: GameState, cardId: string): GameState {
   }
   return {
     ...state,
-    phase: "observe",
+    phase: "opportunity",
     investorDeck: [...state.investorDeck, card],
     draftedCardIds: [...state.draftedCardIds, card.id],
     draftOffer: [],
@@ -849,10 +1078,33 @@ export function drawEvent(state: GameState): GameState {
     body: `${narrative} Commitments ${after - before >= 0 ? "strengthened" : "weakened"} by ${capital(Math.abs(after - before))}. Wisdom ${wisdomChange >= 0 ? "+" : ""}${wisdomChange}.`,
     tone: after >= before ? "positive" : "negative",
   };
+  const decisionMemos = state.decisionMemos.map((memo) => {
+    if (memo.turn !== state.turn || memo.result) return memo;
+    const company = updatedCompanies.find((item) => item.id === memo.companyId);
+    if (!company) return memo;
+    const valueAfter = positionValue({ ...state, companies: updatedCompanies }, company.id);
+    const changePercent = ((company.price - memo.snapshot.price) / memo.snapshot.price) * 100;
+    const worked =
+      (memo.action === "ignore" || memo.action === "watchlist") ? changePercent < 0 :
+      memo.action === "sell" || memo.action === "trim" ? changePercent <= 2 :
+      changePercent >= -2;
+    return {
+      ...memo,
+      result: {
+        priceAfter: company.price,
+        valueAfter,
+        changePercent,
+        note: worked
+          ? `That memo held up after ${eventPick.item.title}.`
+          : `That memo was challenged by ${eventPick.item.title}.`,
+      },
+    };
+  });
   return {
     ...state,
     phase: "world",
     companies: updatedCompanies,
+    decisionMemos,
     currentEvent: resolvedEvent,
     logs: [log, ...state.logs],
     legacyScore: state.legacyScore + legacyGain,
@@ -879,14 +1131,18 @@ export function continueTurn(state: GameState): GameState {
   const nextTurn = state.turn + 1;
   const shouldDraft = draftTurns.has(nextTurn);
   const draft = shouldDraft ? generateDraftOffer(state.seed, state.draftedCardIds) : { offer: [], seed: state.seed };
+  const round = generateRoundOpportunityIds(state.companies, draft.seed);
   const moments = shouldDraft
     ? [moment("unlock", "New Draft Unlocked", "Choose another mental model. Your philosophy can pivot or double down.", "neutral")]
     : [moment("critical", "One More Turn", "A new world state is open. Observe what changed before acting.", "neutral")];
   return {
     ...state,
-    phase: shouldDraft ? "draft" : "observe",
+    phase: shouldDraft ? "draft" : "opportunity",
     turn: nextTurn,
     currentEvent: null,
+    roundOpportunityIds: round.ids,
+    opportunityIndex: 0,
+    pendingOpportunityAction: null,
     lastAction: null,
     actionUsed: false,
     allocationChanged: false,
@@ -898,7 +1154,7 @@ export function continueTurn(state: GameState): GameState {
       attention: clamp(state.resources.attention + 0.5, 0, 10),
       patience: clamp(state.resources.patience + 0.25, 0, 10),
     },
-    seed: draft.seed,
+    seed: round.seed,
   };
 }
 
@@ -945,6 +1201,21 @@ export function summarizeGame(state: GameState): GameSummary {
   const worstDecision = behavior.panicSells
     ? "Sold into a drawdown"
     : worstResult < 0 ? `Overcommitted to ${name(results[results.length - 1]?.companyId)}` : "Left optionality unused";
+  const memoCounts = state.decisionMemos.reduce<Record<string, number>>((counts, memo) => {
+    counts[memo.reason] = (counts[memo.reason] ?? 0) + 1;
+    return counts;
+  }, {});
+  const mostCommonReason = Object.entries(memoCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "No memo pattern emerged.";
+  const gradedMemos = state.decisionMemos
+    .filter((memo) => memo.result)
+    .map((memo) => ({ memo, score: memo.result?.changePercent ?? 0 }))
+    .sort((a, b) => b.score - a.score);
+  const bestMemo = gradedMemos[0]
+    ? `${gradedMemos[0].memo.companyName}: “${gradedMemos[0].memo.reason}” ${gradedMemos[0].score >= 0 ? "worked" : "limited damage"} after the world reacted.`
+    : bestDecision;
+  const worstMemo = gradedMemos[gradedMemos.length - 1]
+    ? `${gradedMemos[gradedMemos.length - 1].memo.companyName}: “${gradedMemos[gradedMemos.length - 1].memo.reason}” was the hardest memo to defend.`
+    : worstDecision;
   return {
     finalValue,
     returnPercent: ((finalValue - state.initialCapital) / state.initialCapital) * 100,
@@ -958,5 +1229,8 @@ export function summarizeGame(state: GameState): GameSummary {
     dominantBehavior,
     investorArchetype,
     lesson,
+    mostCommonReason,
+    bestMemo,
+    worstMemo,
   };
 }

@@ -17,6 +17,7 @@ export function EventOverlay({
   const { event } = resolved;
   const final = state.turn >= state.maxTurns;
   const affected = state.companies.filter((company) => resolved.targetIds.includes(company.id));
+  const turnMemos = state.decisionMemos.filter((memo) => memo.turn === state.turn);
 
   return (
     <div className="event-backdrop">
@@ -70,6 +71,17 @@ export function EventOverlay({
             <p><span>WISDOM</span>{resolved.wisdomChange >= 0 ? "+" : ""}{resolved.wisdomChange} wisdom this turn · current wisdom {state.wisdomScore}</p>
             <p><span>LESSON HINT</span>{resolved.lessonHint}</p>
           </div>
+          {turnMemos.length > 0 && (
+            <div className="memo-feedback">
+              <span>MEMOS TESTED</span>
+              {turnMemos.map((memo) => (
+                <p key={memo.id}>
+                  <b>{memo.companyName}</b>: “{memo.reason}”
+                  {memo.result ? ` · ${memo.result.changePercent >= 0 ? "+" : ""}${memo.result.changePercent.toFixed(1)}% · ${memo.result.note}` : ""}
+                </p>
+              ))}
+            </div>
+          )}
           <MomentStack moments={resolved.moments} />
           <div className="remaining-resources">
             <span>◎ {state.resources.attention.toFixed(1)}</span>
