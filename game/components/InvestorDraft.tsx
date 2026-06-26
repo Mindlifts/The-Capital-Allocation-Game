@@ -40,6 +40,8 @@ export function InvestorDraft({
                 <span>{card.icon}</span>
                 <i>{card.rarity}</i>
               </div>
+              {card.rarity === "Legendary" && <div className="legendary-ribbon">Legendary discovery</div>}
+              {card.rarity === "Epic" && <div className="legendary-ribbon epic-ribbon">Epic mental model</div>}
               <h3>{card.title}</h3>
               <p className="card-lore">{card.shortLore}</p>
               <div className="card-rule">

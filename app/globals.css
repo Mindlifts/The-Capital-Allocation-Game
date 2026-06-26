@@ -453,6 +453,22 @@ body::before {
 .investor-card-top span { color: var(--gold); font-size: 34px; }
 .investor-card-top i { color: var(--muted); font: normal 8px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
 .investor-card h3 { font-size: 25px; line-height: 1.05; margin: 22px 0 10px; }
+.legendary-ribbon {
+  margin-top: 18px;
+  width: fit-content;
+  padding: 7px 9px;
+  border: 1px solid rgba(244,214,133,.45);
+  color: var(--gold-bright);
+  background: rgba(225,189,101,.08);
+  font: 8px var(--mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.epic-ribbon {
+  border-color: rgba(197,145,255,.4);
+  color: #c591ff;
+  background: rgba(197,145,255,.08);
+}
 .card-lore { color: #c0c9c6; font-size: 12px; line-height: 1.55; min-height: 58px; }
 .card-rule { padding: 12px; border: 1px solid rgba(255,255,255,.055); background: rgba(255,255,255,.02); margin-top: 10px; }
 .card-rule span { color: var(--gold); font: 7px var(--mono); letter-spacing: .12em; }
@@ -489,6 +505,7 @@ body::before {
 .fictional-note { color: var(--faint); font: 7px var(--mono); letter-spacing: .12em; text-transform: uppercase; margin-top: 30px; }
 
 @keyframes fade-in { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: scale(1); } }
+@keyframes moment-pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 @media (max-width: 1180px) {
   .resource { padding: 0 10px; }
@@ -613,6 +630,42 @@ body::before {
   font-size: 10px;
   line-height: 1.5;
 }
+.moment-stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: -12px 0 24px;
+}
+.moment-card {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(225,189,101,.2);
+  background: linear-gradient(90deg, rgba(225,189,101,.07), rgba(255,255,255,.018));
+  animation: moment-pop .28s ease-out;
+}
+.moment-card > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  border: 1px solid rgba(225,189,101,.25);
+  background: rgba(225,189,101,.05);
+}
+.moment-card small {
+  display: block;
+  color: var(--gold);
+  font: 7px var(--mono);
+  text-transform: uppercase;
+  letter-spacing: .13em;
+}
+.moment-card strong { display: block; margin-top: 4px; font-size: 13px; }
+.moment-card p { margin: 4px 0 0; color: #b8c1bd; font-size: 10px; line-height: 1.45; }
+.moment-negative { border-color: rgba(255,111,121,.28); background: linear-gradient(90deg, rgba(255,111,121,.07), rgba(255,255,255,.018)); }
+.moment-negative > span, .moment-negative small { color: var(--red); }
+.moment-neutral { border-color: rgba(138,164,255,.22); }
 .portfolio-totals { text-align: right; }
 .market-recap {
   display: grid;
@@ -896,6 +949,7 @@ body::before {
   .current-directive { grid-template-columns: 1fr auto; }
   .current-directive > span { grid-column: 1 / -1; }
   .decision-questions { grid-template-columns: 1fr 1fr; }
+  .moment-stack { grid-template-columns: 1fr; }
   .market-recap { grid-template-columns: 1fr; gap: 5px; }
   .decision-rail { padding-bottom: 110px; }
   .turn-action {
@@ -930,6 +984,7 @@ body::before {
   .current-directive { padding: 13px; gap: 8px; }
   .current-directive > strong { display: none; }
   .decision-questions { grid-template-columns: 1fr; margin-top: -8px; }
+  .moment-stack { grid-template-columns: 1fr; margin-top: -4px; }
   .market-toolbar h1 { font-size: 25px; }
   .portfolio-totals { display: grid; grid-template-columns: repeat(2, 1fr); text-align: left; gap: 4px; }
   .portfolio-totals span { padding: 7px; background: #0e1417; font-size: 6px; }

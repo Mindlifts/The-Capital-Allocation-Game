@@ -22,6 +22,7 @@ import { CompanyCard } from "@/game/components/CompanyCard";
 import { EndScreen } from "@/game/components/EndScreen";
 import { EventOverlay } from "@/game/components/EventOverlay";
 import { InvestorDraft } from "@/game/components/InvestorDraft";
+import { MomentStack } from "@/game/components/MomentStack";
 import { Onboarding } from "@/game/components/Onboarding";
 import { ResourceBar } from "@/game/components/ResourceBar";
 import { TurnStepper } from "@/game/components/TurnStepper";
@@ -260,6 +261,8 @@ export default function CapitalGamePage() {
             <div><span>OPTIONS</span><p>{phaseCopy.options}</p></div>
             <div><span>TRADEOFF</span><p>{phaseCopy.tradeoff}</p></div>
           </div>
+
+          {state.phase !== "world" && state.phase !== "reflect" && <MomentStack moments={state.moments} />}
 
           <div className="market-toolbar">
             <div>
