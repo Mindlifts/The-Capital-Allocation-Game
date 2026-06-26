@@ -1,0 +1,20 @@
+.character-signals { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0; }
+.character-signal { min-height: 104px; padding: 14px; border: 1px solid rgba(225,189,101,.16); background: linear-gradient(145deg, rgba(255,255,255,.04), rgba(0,0,0,.14)); }
+.character-signal span { display: block; color: var(--gold); font: 8px var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+.character-signal strong { display: block; margin: 7px 0 4px; color: #f1ead8; font: 600 15px "Playfair Display", serif; }
+.character-signal p { margin: 0; color: #9fa9a6; font-size: 11px; line-height: 1.5; }
+.unresolved-thread { position: relative; z-index: 1; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 15px; margin: 0 0 12px; border: 1px dashed rgba(225,189,101,.32); background: rgba(225,189,101,.045); }
+.unresolved-thread > span { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(225,189,101,.3); color: var(--gold); font: 18px "Playfair Display", serif; }
+.unresolved-thread small, .unresolved-thread strong { display: block; }
+.unresolved-thread small { color: var(--gold); font: 7px var(--mono); letter-spacing: .13em; }
+.unresolved-thread strong { margin-top: 5px; color: #e5dfcf; font-size: 12px; line-height: 1.45; }
+.relationship-memory { position: relative; z-index: 1; display: grid; grid-template-columns: .8fr 1.25fr 1fr; gap: 8px; }
+.relationship-memory > div { padding: 13px; border: 1px solid rgba(225,189,101,.14); background: rgba(0,0,0,.16); }
+.relationship-memory span { display: block; color: #697573; font: 7px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.relationship-memory strong { display: block; margin-top: 7px; color: #dbe1dd; font-size: 11px; line-height: 1.5; }
+.focused-card .signal-strip, .focused-card .hidden-strip, .focused-card .takeaway-grid { display: none; }
+.focused-card .choice-oath { margin-top: -4px; }
+@media (max-width: 760px) {
+  .character-signals, .relationship-memory { grid-template-columns: 1fr; }
+  .character-signal { min-height: 0; }
+}
