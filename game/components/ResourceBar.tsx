@@ -5,11 +5,11 @@ const resourceMeta: Array<{
   label: string;
   icon: string;
 }> = [
-  { key: "capital", label: "Capital", icon: "♜" },
-  { key: "attention", label: "Attention", icon: "◈" },
-  { key: "credibility", label: "Credibility", icon: "♛" },
-  { key: "patience", label: "Patience", icon: "◷" },
-  { key: "optionality", label: "Optionality", icon: "✦" },
+  { key: "capital", label: "Cash", icon: "$" },
+  { key: "attention", label: "Focus", icon: "Eye" },
+  { key: "credibility", label: "Trust", icon: "Rep" },
+  { key: "patience", label: "Calm", icon: "Time" },
+  { key: "optionality", label: "Upside", icon: "Opt" },
 ];
 
 export function ResourceBar({ state }: { state: GameState }) {
