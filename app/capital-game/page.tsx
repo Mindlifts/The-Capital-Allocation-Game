@@ -42,6 +42,16 @@ const actionCopy: Record<OpportunityActionType, { label: string; hint: string; i
   sell: { label: "Sell", hint: "Exit and free capital.", icon: "!" },
 };
 
+const industryGlyph: Record<string, string> = {
+  mining: "⛏",
+  energy: "◆",
+  technology: "✦",
+  agriculture: "❦",
+  shipping: "≈",
+  biotech: "☤",
+  infrastructure: "▣",
+};
+
 function visibleSignals(company: CompanyState) {
   return company.revealedTraits.slice(0, 5).map((trait) => ({
     key: trait,
@@ -67,15 +77,31 @@ function OpportunityCard({
   const position = positionValue(state, company.id);
   const change = company.recentChange * 100;
   const hidden = hiddenLabels(company);
+  const themeGlyph = industryGlyph[company.industry] ?? "◇";
+  const risk = riskLevel(company);
   return (
-    <article className="focused-card">
+    <article className={`focused-card art-${company.industry} risk-aura-${risk.toLowerCase()}`}>
       <div className="focused-card-orbit" />
+      <div className="card-corner corner-one" />
+      <div className="card-corner corner-two" />
+      <div className="card-corner corner-three" />
+      <div className="card-corner corner-four" />
       <div className="focused-card-top">
         <span className="card-kicker">{industryMap[company.industry]?.label} · {regionMap[company.region]?.label}</span>
         <div className="card-badges">
-          <span className={`risk-${riskLevel(company).toLowerCase()}`}>{riskLevel(company)} risk</span>
+          <span className={`risk-${risk.toLowerCase()}`}>{risk} risk</span>
           <span>Hype {company.traits.marketHype}/10</span>
         </div>
+      </div>
+
+      <div className="company-art-window" aria-hidden="true">
+        <div className="painted-sky" />
+        <div className="painted-mountains" />
+        <div className="painted-ground" />
+        <div className="painted-tower" />
+        <div className="painted-glow" />
+        <span className="art-glyph">{themeGlyph}</span>
+        <small>{company.role}</small>
       </div>
 
       <div className="focused-title-row">
@@ -95,6 +121,8 @@ function OpportunityCard({
         {company.name} wants {company.desire.toLowerCase()} but is haunted by {company.flaw.toLowerCase()}.
         This run adds: <strong>{company.opportunity.title}</strong> — {company.opportunity.lore}
       </p>
+
+      <p className="choice-oath">You are not clicking a button. You are choosing what kind of thinker gets to survive this world.</p>
 
       <div className="signal-strip">
         {visibleSignals(company).map((signal) => (

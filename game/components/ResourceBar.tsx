@@ -5,10 +5,10 @@ const resourceMeta: Array<{
   label: string;
   icon: string;
 }> = [
-  { key: "capital", label: "Capital", icon: "$" },
-  { key: "attention", label: "Attention", icon: "◎" },
-  { key: "credibility", label: "Credibility", icon: "◆" },
-  { key: "patience", label: "Patience", icon: "◴" },
+  { key: "capital", label: "Capital", icon: "♜" },
+  { key: "attention", label: "Attention", icon: "◈" },
+  { key: "credibility", label: "Credibility", icon: "♛" },
+  { key: "patience", label: "Patience", icon: "◷" },
   { key: "optionality", label: "Optionality", icon: "✦" },
 ];
 
