@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { philosophyMap } from "../config";
 import { summarizeGame } from "../engine";
 import type { GameState } from "../types";
+import { WarRoomTimelines } from "./WarRoomTimelines";
 
 const capital = (value: number) => `${Math.round(value).toLocaleString("en-US")} capital`;
 const HISTORY_KEY = "capital-allocation-game-runs";
@@ -108,6 +109,8 @@ export function EndScreen({ state, onRestart }: { state: GameState; onRestart: (
           <div><span>HARDEST MEMO</span><strong>{summary.worstMemo}</strong></div>
           <div><span>BIGGEST LESSON</span><strong>{summary.lesson}</strong></div>
         </div>
+
+        <WarRoomTimelines state={state} />
 
         <div className="philosophy-verdict">
           <span style={{ color: philosophy.accent }}>{philosophy.icon}</span>

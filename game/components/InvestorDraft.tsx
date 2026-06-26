@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { InvestorCard } from "../types";
 
 const rarityOrder: Record<InvestorCard["rarity"], number> = {
@@ -29,12 +30,13 @@ export function InvestorDraft({
           Pick the model you want shaping every decision from here.
         </p>
         <div className="draft-grid">
-          {sorted.map((card) => (
+          {sorted.map((card, index) => (
             <button
               type="button"
               className={`investor-card investor-${card.rarity.toLowerCase()}`}
               key={card.id}
               onClick={() => onDraft(card.id)}
+              style={{ "--reveal-order": index } as CSSProperties}
             >
               <div className="investor-card-top">
                 <span>{card.icon}</span>
