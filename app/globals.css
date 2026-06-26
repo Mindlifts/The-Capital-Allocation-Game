@@ -724,6 +724,71 @@ body::before {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
 
+/* Viewport-locked field briefing */
+.onboarding-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: clamp(10px, 2.5vh, 24px);
+  display: grid;
+  place-items: center;
+  overscroll-behavior: contain;
+}
+.onboarding-card {
+  width: min(520px, calc(100vw - 20px));
+  height: auto;
+  min-height: 0;
+  max-height: calc(100dvh - clamp(20px, 5vh, 48px));
+  padding: clamp(38px, 6vh, 52px) clamp(24px, 4vw, 52px) clamp(22px, 4vh, 46px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: briefing-focus .4s cubic-bezier(.2,.8,.2,1) both;
+}
+.onboarding-card > .eyebrow { flex: 0 0 auto; }
+.briefing-icon {
+  flex: 0 0 auto;
+  width: clamp(68px, 15vh, 115px);
+  height: clamp(68px, 15vh, 115px);
+  margin: clamp(18px, 5vh, 48px) auto clamp(14px, 3vh, 25px);
+  font-size: clamp(30px, 6vh, 45px);
+}
+.onboarding-card h2 {
+  flex: 0 0 auto;
+  font-size: clamp(27px, 4.2vh, 36px);
+  line-height: 1.05;
+  margin-bottom: clamp(8px, 1.8vh, 14px);
+}
+.onboarding-card > p {
+  min-height: 0;
+  font-size: clamp(12px, 1.8vh, 14px);
+  line-height: 1.55;
+}
+.briefing-dots {
+  flex: 0 0 auto;
+  margin: clamp(15px, 3.5vh, 27px) 0;
+}
+.onboarding-card .primary-button { flex: 0 0 auto; min-height: clamp(48px, 7vh, 58px); }
+@keyframes briefing-focus { from { opacity: 0; transform: translateY(12px) scale(.985); filter: blur(5px); } }
+
+@media (max-height: 620px) and (min-width: 561px) {
+  .onboarding-card { padding-top: 32px; padding-bottom: 24px; }
+  .briefing-icon { width: 66px; height: 66px; margin-top: 14px; margin-bottom: 12px; font-size: 28px; }
+  .onboarding-card h2 { font-size: 27px; }
+  .onboarding-card > p { max-width: 430px; font-size: 12px; }
+  .briefing-dots { margin: 13px 0; }
+}
+
+@media (max-width: 560px) {
+  .onboarding-backdrop { padding: 8px; }
+  .onboarding-card { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); padding: 42px 22px 22px; }
+  .skip-tutorial { top: 16px; right: 16px; font-size: 9px; }
+}
+
 /* Gameplay clarity upgrade */
 .turn-stepper {
   position: sticky;

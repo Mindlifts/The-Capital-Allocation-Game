@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const lessons = [
   { icon: "◇", title: "Everything is scarce", body: "Capital matters, but so do Attention, Credibility, Patience, and Optionality. Each buys a different kind of decision power." },
@@ -10,9 +10,17 @@ const lessons = [
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const [index, setIndex] = useState(0);
   const lesson = lessons[index];
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.scrollTo({ top: 0, behavior: "auto" });
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, []);
+
   return (
-    <div className="onboarding-backdrop">
-      <section className="onboarding-card">
+    <div className="onboarding-backdrop" role="dialog" aria-modal="true" aria-label="Field briefing">
+      <section className="onboarding-card" key={index}>
         <button type="button" className="skip-tutorial" onClick={onDone}>Skip briefing</button>
         <span className="eyebrow">60-SECOND FIELD BRIEFING // {index + 1} OF {lessons.length}</span>
         <div className="briefing-icon">{lesson.icon}</div>
