@@ -15,11 +15,13 @@ No real companies, real tickers, market data, or investment advice are used.
 
 Each ten-turn run follows a clear rhythm:
 
-1. Read the world.
-2. Commit or rebalance capital.
-3. Use one doctrine power.
-4. Face a world response card.
-5. Read the consequence and gain wisdom.
+1. Observe what changed.
+2. Think through why it matters.
+3. Choose one doctrine power.
+4. Commit capital to the thesis.
+5. Watch the world react.
+6. Reflect on consequence, regret, and wisdom.
+7. Repeat.
 
 Runs randomize trait values, hidden-trait order, and event sequence while
 preserving the fictional universe.

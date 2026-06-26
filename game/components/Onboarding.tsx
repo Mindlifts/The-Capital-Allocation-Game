@@ -3,8 +3,8 @@ import { useState } from "react";
 const lessons = [
   { icon: "◇", title: "Everything is scarce", body: "Capital matters, but so do Attention, Credibility, Patience, and Optionality. Each buys a different kind of decision power." },
   { icon: "?", title: "Companies are characters", body: "Each one has visible instincts and hidden instincts. You are reading motives, flaws, and potential under fog." },
-  { icon: "↯", title: "The world responds", body: "Every turn ends with an event. The event tests what you believed, not just what you owned." },
-  { icon: "✦", title: "Build a philosophy", body: "Read, commit, use one power, face the response, and adapt. Ten turns decide what kind of thinker you became." },
+  { icon: "↯", title: "The world responds", body: "Every turn creates a response. It tests what you believed, why you believed it, and how much you committed." },
+  { icon: "✦", title: "Build a philosophy", body: "Observe, think, choose, commit, watch the world react, then reflect. Ten turns decide what kind of thinker you became." },
 ];
 
 export function Onboarding({ onDone }: { onDone: () => void }) {

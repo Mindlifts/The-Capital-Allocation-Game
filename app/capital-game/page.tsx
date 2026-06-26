@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { archetypeMap, philosophies, philosophyMap } from "@/game/config";
 import {
+  beginCommit,
   beginAllocation,
   continueTurn,
   drawEvent,
@@ -75,7 +76,7 @@ export default function CapitalGamePage() {
           </button>
           <div className="start-stats">
             <span><b>08</b> uncertain characters</span>
-            <span><b>05</b> steps per turn</span>
+            <span><b>06</b> meaningful beats per turn</span>
             <span><b>10</b> turns to gain wisdom</span>
           </div>
         </section>
@@ -122,7 +123,7 @@ export default function CapitalGamePage() {
                   <h3>{philosophy.subtitle}</h3>
                   <p>{philosophy.doctrine}</p>
                   <div className="philosophy-resources">
-                    <span>${philosophy.resources.capital}</span><span>◎ {philosophy.resources.attention}</span>
+                    <span>◇ {philosophy.resources.capital}</span><span>◎ {philosophy.resources.attention}</span>
                     <span>◆ {philosophy.resources.credibility}</span><span>◴ {philosophy.resources.patience}</span>
                   </div>
                   <div className="philosophy-bonus">{philosophy.scoringBonus}</div>
@@ -150,12 +151,61 @@ export default function CapitalGamePage() {
     : state.companies;
   const latestEvent = state.logs.find((log) => log.id.startsWith("event-"));
   const phaseCopy = {
-    review: { title: "Read the world", body: state.turn === 1 ? "Meet the cast. Compare visible instincts, risk, hype, and what remains hidden." : "The world changed last turn. Decide whether your thesis changed—or only your emotions.", button: "Commit capital" },
-    allocate: { title: "Commit or rebalance", body: "Open a character card. Pledge, trim, abandon, or leave the thesis untouched.", button: "Lock commitments" },
-    action: { title: "Use one doctrine power", body: state.actionUsed ? state.lastAction?.description ?? "Power selected." : "Spend one scarce resource—or hold—to shape the uncertainty ahead.", button: "Face world response" },
-    event: { title: "World responding", body: "The world is moving. Your commitments and doctrine are being tested.", button: "Resolving…" },
-    result: { title: "Gain wisdom", body: "Separate consequence from lesson before continuing.", button: "Continue" },
-    ended: { title: "", body: "", button: "" },
+    observe: {
+      title: "Observe",
+      body: state.turn === 1 ? "Meet the cast. Notice hype, danger, hidden instincts, and who already feels tempting." : "Something changed. Read the recap before touching anything.",
+      button: "Think",
+      changed: state.turn === 1 ? "The run begins with incomplete information." : latestEvent?.title ?? "The world moved.",
+      why: state.turn === 1 ? "Your first edge is noticing what is visible and what is missing." : latestEvent?.body ?? "Events test commitments and doctrine.",
+      options: "Inspect cards. Compare visible traits. Look for mystery, danger, and doctrine fit.",
+      tradeoff: "Looking longer costs no resource, but the run only gives you ten turns.",
+    },
+    think: {
+      title: "Think",
+      body: "Form a thesis before acting. Which uncertainty is worth paying to reduce, amplify, or endure?",
+      button: "Choose",
+      changed: "No numbers move here; your interpretation does.",
+      why: "Good decisions start by naming the tradeoff before the game pressures you.",
+      options: "Target one character, preserve resources, or prepare to hold through noise.",
+      tradeoff: "More information reduces surprise. More boldness creates upside and regret.",
+    },
+    choose: {
+      title: "Choose",
+      body: state.actionUsed ? state.lastAction?.description ?? "Power selected." : "Pick one doctrine power. This is your edge before capital goes to work.",
+      button: "Commit",
+      changed: state.actionUsed ? state.lastAction?.title ?? "Power selected" : "Your power is still unused.",
+      why: "One action creates information or tension. You cannot do everything.",
+      options: "Investigate, call in credibility, declare patience, take optionality, or hold.",
+      tradeoff: "Every power spends scarcity or gives up a different edge.",
+    },
+    commit: {
+      title: "Commit",
+      body: "Now size the thesis. Pledge, trim, abandon, or leave commitments untouched.",
+      button: "World reacts",
+      changed: state.actionUsed ? `Your edge: ${state.lastAction?.title}` : "No edge selected.",
+      why: "Sizing turns a thought into consequence.",
+      options: "Open cards to pledge or trim capital. You may also keep commitments unchanged.",
+      tradeoff: "Bigger commitments create bigger lessons. Smaller commitments preserve optionality.",
+    },
+    world: {
+      title: "World Reacts",
+      body: "The world is moving. Your commitments and doctrine are being tested.",
+      button: "Resolving…",
+      changed: "A response card is resolving.",
+      why: "The world is allowed to disagree with your thesis.",
+      options: "Watch what gets hit and what survives.",
+      tradeoff: "You already chose. Now you learn.",
+    },
+    reflect: {
+      title: "Reflect",
+      body: "Separate consequence from lesson before the next turn.",
+      button: "Repeat",
+      changed: state.currentEvent?.lessonHint ?? "A lesson is available.",
+      why: "Wisdom comes from noticing the pattern, not just the outcome.",
+      options: "Read best fate, hardest lesson, wisdom change, and remaining resources.",
+      tradeoff: "Adapt too slowly and you repeat mistakes. Adapt too fast and you abandon true conviction.",
+    },
+    ended: { title: "", body: "", button: "", changed: "", why: "", options: "", tradeoff: "" },
   }[state.phase];
 
   const selectAction = (type: PlayerActionType, companyId?: string) => {
@@ -188,12 +238,19 @@ export default function CapitalGamePage() {
           <div className="current-directive">
             <span>YOUR REQUIRED DECISION</span>
             <div><b>{phaseCopy.title}</b><p>{phaseCopy.body}</p></div>
-            <strong>STEP {Math.max(1, ["review", "allocate", "action", "event", "result"].indexOf(state.phase) + 1)} / 5</strong>
+            <strong>STEP {Math.max(1, ["observe", "think", "choose", "commit", "world", "reflect"].indexOf(state.phase) + 1)} / 6</strong>
+          </div>
+
+          <div className="decision-questions">
+            <div><span>WHAT CHANGED?</span><p>{phaseCopy.changed}</p></div>
+            <div><span>WHY?</span><p>{phaseCopy.why}</p></div>
+            <div><span>OPTIONS</span><p>{phaseCopy.options}</p></div>
+            <div><span>TRADEOFF</span><p>{phaseCopy.tradeoff}</p></div>
           </div>
 
           <div className="market-toolbar">
             <div>
-              <span className="eyebrow">NORTHSTAR FICTIONAL EXCHANGE</span>
+              <span className="eyebrow">NORTHSTAR DECISION ROOM</span>
               <h1>{tab === "portfolio" ? "Your commitments" : tab === "intel" ? "Wisdom ledger" : "The uncertain cast"}</h1>
             </div>
             <div className="portfolio-totals">
@@ -206,7 +263,7 @@ export default function CapitalGamePage() {
             </div>
           </div>
 
-          {state.phase === "review" && state.turn > 1 && latestEvent && (
+          {state.phase === "observe" && state.turn > 1 && latestEvent && (
             <div className="market-recap">
               <span>LAST TURN</span><strong>{latestEvent.title}</strong><p>{latestEvent.body}</p>
             </div>
@@ -264,7 +321,7 @@ export default function CapitalGamePage() {
             <p>{phaseCopy.body}</p>
           </div>
 
-          {state.phase === "action" && (
+          {state.phase === "choose" && (
             <div className="rail-section global-action">
               <span className="eyebrow">NO COMPANY REQUIRED</span>
               <button type="button" disabled={state.actionUsed} onClick={() => selectAction("hold")}>
@@ -289,27 +346,28 @@ export default function CapitalGamePage() {
             <button
               type="button"
               className="advance-button"
-              disabled={state.phase === "action" && !state.actionUsed}
+              disabled={state.phase === "choose" && !state.actionUsed}
               onClick={() => {
                 setSelectedCompany(null);
                 setState((current) => {
                   if (!current) return current;
-                  if (current.phase === "review") return beginAllocation(current);
-                  if (current.phase === "allocate") return finishAllocation(current);
-                  if (current.phase === "action") return drawEvent(current);
+                  if (current.phase === "observe") return beginAllocation(current);
+                  if (current.phase === "think") return finishAllocation(current);
+                  if (current.phase === "choose") return beginCommit(current);
+                  if (current.phase === "commit") return drawEvent(current);
                   return current;
                 });
               }}
             >
               <span>{phaseCopy.button}</span><b>→</b>
             </button>
-            {state.phase === "action" && !state.actionUsed && <small>Choose an action before drawing the event.</small>}
+            {state.phase === "choose" && !state.actionUsed && <small>Choose a power before committing capital.</small>}
           </div>
         <p className="rail-note">FICTIONAL STRATEGY MECHANICS · NO REAL MARKET DATA</p>
         </aside>
       </div>
 
-      {(state.phase === "event" || state.phase === "result") && (
+      {(state.phase === "world" || state.phase === "reflect") && (
         <EventOverlay
           state={state}
           onReveal={() => setState((current) => current ? revealResult(current) : current)}

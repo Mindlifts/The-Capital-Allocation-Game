@@ -1,11 +1,12 @@
 import type { TurnPhase } from "../types";
 
 const steps: Array<{ phase: TurnPhase; label: string; short: string }> = [
-  { phase: "review", label: "Read the world", short: "Read" },
-  { phase: "allocate", label: "Commit capital", short: "Commit" },
-  { phase: "action", label: "Use one power", short: "Power" },
-  { phase: "event", label: "World responds", short: "World" },
-  { phase: "result", label: "Gain wisdom", short: "Wisdom" },
+  { phase: "observe", label: "Observe", short: "Observe" },
+  { phase: "think", label: "Think", short: "Think" },
+  { phase: "choose", label: "Choose", short: "Choose" },
+  { phase: "commit", label: "Commit", short: "Commit" },
+  { phase: "world", label: "World Reacts", short: "World" },
+  { phase: "reflect", label: "Reflect", short: "Reflect" },
 ];
 
 export function TurnStepper({ phase }: { phase: TurnPhase }) {
