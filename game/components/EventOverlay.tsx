@@ -35,6 +35,20 @@ export function EventOverlay({
   const resultHeadline = resolved.portfolioChange >= 0
     ? "Your decisions survived this round."
     : "The world pushed back on your decisions.";
+  const focalCompany = affected[0];
+  const focalMemo = turnMemos.find((memo) => memo.companyId === focalCompany?.id) ?? turnMemos[0];
+  const costLine = resolved.portfolioChange >= 0
+    ? `Your commitments gained ${capital(resolved.portfolioChange)}. Relief is real—but the new expectations are now part of the risk.`
+    : `Your commitments lost ${capital(Math.abs(resolved.portfolioChange))}. The loss matters less than whether the reason you committed still survives.`;
+  const memoryLine = focalMemo
+    ? `You chose to ${focalMemo.action} in ${focalMemo.companyName} because “${focalMemo.reason}” ${focalMemo.result?.changePercent && focalMemo.result.changePercent < 0 ? "That belief is now under pressure." : "For now, the world has not disproved it."}`
+    : focalCompany
+      ? `${focalCompany.name} changed without a fresh commitment from you. What you do next will decide whether this was patience or absence.`
+      : "The world changed while you watched. Your next choice will reveal what you learned.";
+  const focalFlaw = focalCompany ? focalCompany.flaw.charAt(0).toLowerCase() + focalCompany.flaw.slice(1) : "";
+  const unresolvedLine = focalCompany
+    ? `${focalCompany.name} still ${focalCompany.desire.toLowerCase()} Yet it ${focalFlaw} ${knowledge.decisionPrompt}`
+    : knowledge.decisionPrompt;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -93,50 +107,45 @@ export function EventOverlay({
           <div className="result-scroll">
             <span className="eyebrow">TURN {state.turn} // AFTER-ACTION REPORT</span>
             <h2>{resultHeadline}</h2>
-            <div className={`portfolio-impact ${resolved.portfolioChange >= 0 ? "gain" : "loss"}`}>
-              <span>Commitment impact</span>
-              <strong>{resolved.portfolioChange >= 0 ? "+" : ""}{capital(resolved.portfolioChange)}</strong>
-              <small>{capital(resolved.portfolioBefore)} → {capital(resolved.portfolioAfter)}</small>
+            <div className="reflection-beats">
+              <article className="reflection-beat beat-world">
+                <span>01 · WHAT HAPPENED</span>
+                <h3>{event.title}</h3>
+                <p>{knowledge.summary}</p>
+                <small>{knowledge.cause}</small>
+              </article>
+              <article className={`reflection-beat beat-cost ${resolved.portfolioChange >= 0 ? "positive" : "negative"}`}>
+                <span>02 · WHAT IT COST</span>
+                <h3>{resolved.portfolioChange >= 0 ? "+" : ""}{capital(resolved.portfolioChange)}</h3>
+                <p>{costLine}</p>
+                <small>{memoryLine}</small>
+              </article>
+              <article className="reflection-beat beat-unresolved">
+                <span>03 · WHAT REMAINS UNRESOLVED</span>
+                <h3>{focalCompany?.name ?? "The next decision"}</h3>
+                <p>{unresolvedLine}</p>
+                <small>This thread may return in a later round.</small>
+              </article>
             </div>
-            <div className="mover-grid">
-              <div>
-                <span>Best fate</span>
-                <strong>{resolved.bestMover.name}</strong>
-                <b className="gain">+{resolved.bestMover.changePercent.toFixed(1)}%</b>
+
+            <details className="reflection-details">
+              <summary>See why the world moved <span>＋</span></summary>
+              <div className="reflection-detail-body">
+                <div className="mover-grid">
+                  <div><span>Best fate</span><strong>{resolved.bestMover.name}</strong><b className="gain">+{resolved.bestMover.changePercent.toFixed(1)}%</b></div>
+                  <div><span>Hardest lesson</span><strong>{resolved.worstMover.name}</strong><b className="loss">{resolved.worstMover.changePercent.toFixed(1)}%</b></div>
+                </div>
+                <div className="result-lines">
+                  <p><span>CAUSE</span>{knowledge.cause}</p>
+                  <p><span>CONSEQUENCE</span>{knowledge.consequence}</p>
+                  <p><span>YOUR EDGE</span>{state.lastAction?.description}</p>
+                  <p><span>PHILOSOPHY</span>{resolved.philosophyEffect}</p>
+                </div>
+                {turnMemos.length > 0 && <div className="memo-feedback"><span>MEMORIES TESTED</span>{turnMemos.map((memo) => <p key={memo.id}><b>{memo.companyName}</b>: “{memo.reason}”{memo.result ? ` · ${memo.result.changePercent >= 0 ? "+" : ""}${memo.result.changePercent.toFixed(1)}% · ${memo.result.note}` : ""}</p>)}</div>}
+                <MomentStack moments={resolved.moments} />
+                <div className="remaining-resources"><span>◎ {state.resources.attention.toFixed(1)}</span><span>◆ {state.resources.credibility.toFixed(1)}</span><span>◴ {state.resources.patience.toFixed(1)}</span><span>✦ {state.resources.optionality.toFixed(1)}</span></div>
               </div>
-              <div>
-                <span>Hardest lesson</span>
-                <strong>{resolved.worstMover.name}</strong>
-                <b className="loss">{resolved.worstMover.changePercent.toFixed(1)}%</b>
-              </div>
-            </div>
-            <div className="result-lines">
-              <p><span>WHAT CHANGED</span>{knowledge.summary} {affectedNames} moved your total capital by {resolved.portfolioChange >= 0 ? "+" : ""}{capital(resolved.portfolioChange)}.</p>
-              <p><span>WHY IT HAPPENED</span>{knowledge.cause}</p>
-              <p><span>WHAT IT MEANS</span>{knowledge.consequence}</p>
-              <p><span>YOUR NEXT QUESTION</span>{knowledge.decisionPrompt}</p>
-              <p><span>YOUR EDGE</span>{state.lastAction?.description}</p>
-              <p><span>PHILOSOPHY</span>{resolved.philosophyEffect}</p>
-              <p><span>WISDOM</span>{resolved.wisdomChange >= 0 ? "+" : ""}{resolved.wisdomChange} wisdom this turn · current wisdom {state.wisdomScore}</p>
-            </div>
-            {turnMemos.length > 0 && (
-              <div className="memo-feedback">
-                <span>MEMOS TESTED</span>
-                {turnMemos.map((memo) => (
-                  <p key={memo.id}>
-                    <b>{memo.companyName}</b>: “{memo.reason}”
-                    {memo.result ? ` · ${memo.result.changePercent >= 0 ? "+" : ""}${memo.result.changePercent.toFixed(1)}% · ${memo.result.note}` : ""}
-                  </p>
-                ))}
-              </div>
-            )}
-            <MomentStack moments={resolved.moments} />
-            <div className="remaining-resources">
-              <span>◎ {state.resources.attention.toFixed(1)}</span>
-              <span>◆ {state.resources.credibility.toFixed(1)}</span>
-              <span>◴ {state.resources.patience.toFixed(1)}</span>
-              <span>✦ {state.resources.optionality.toFixed(1)}</span>
-            </div>
+            </details>
           </div>
           <div className="result-footer">
             <button type="button" className="primary-button" onClick={onContinue}>
