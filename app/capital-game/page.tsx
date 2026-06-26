@@ -27,6 +27,8 @@ import { InvestorDraft } from "@/game/components/InvestorDraft";
 import { MomentStack } from "@/game/components/MomentStack";
 import { Onboarding } from "@/game/components/Onboarding";
 import { ResourceBar } from "@/game/components/ResourceBar";
+import { WarRoomAudio } from "@/game/components/WarRoomAudio";
+import { WarRoomTimelines } from "@/game/components/WarRoomTimelines";
 
 type Screen = "start" | "philosophy" | "game";
 
@@ -294,6 +296,7 @@ export default function CapitalGamePage() {
           <span>ROUND</span>
           <strong>{String(state.turn).padStart(2, "0")} <i>/ {state.maxTurns}</i></strong>
         </div>
+        <WarRoomAudio cue={`${state.phase}-${state.turn}-${state.opportunityIndex}`} />
       </header>
 
       <section className="focused-command">
@@ -310,7 +313,7 @@ export default function CapitalGamePage() {
 
       {state.phase !== "world" && state.phase !== "reflect" && <MomentStack moments={state.moments} />}
 
-      <section className="opportunity-scene">
+      <section className="opportunity-scene" key={`${state.turn}-${state.opportunityIndex}-${state.phase === "reason" ? "reason" : "choice"}`}>
         {company && <OpportunityCard company={company} state={state} />}
 
         <aside className="decision-panel">
@@ -379,6 +382,8 @@ export default function CapitalGamePage() {
           </div>
         </aside>
       </section>
+
+      <WarRoomTimelines state={state} />
 
       {(state.phase === "world" || state.phase === "reflect") && (
         <EventOverlay
