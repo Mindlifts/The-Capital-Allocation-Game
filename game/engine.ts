@@ -1,4 +1,4 @@
-import { companies, events, philosophyMap, traitMap } from "./config";
+import { companies, events, investorCards, philosophyMap, traitMap } from "./config";
 import type {
   BehaviorStats,
   CompanyState,
@@ -6,6 +6,7 @@ import type {
   GameState,
   GameSummary,
   InvestmentRecord,
+  InvestorCard,
   Mover,
   PhilosophyIdentityKey,
   PhilosophyProgression,
@@ -33,6 +34,8 @@ const pick = <T,>(items: T[], seed: number) => {
 const capital = (value: number) =>
   `${Math.round(value).toLocaleString("en-US")} capital`;
 
+const draftTurns = new Set([1, 3, 5, 7, 9]);
+
 const emptyBehavior = (): BehaviorStats => ({
   investigations: 0,
   hypeBuys: 0,
@@ -56,6 +59,32 @@ function shuffled<T>(items: T[], seed: number) {
     [result[index], result[swap]] = [result[swap], result[index]];
   }
   return { items: result, seed: nextSeed };
+}
+
+function cardWeight(card: InvestorCard) {
+  if (card.rarity === "Legendary") return 3;
+  if (card.rarity === "Epic") return 7;
+  if (card.rarity === "Rare") return 14;
+  return 28;
+}
+
+function generateDraftOffer(seed: number, draftedIds: string[], count = 3) {
+  let nextSeed = seed;
+  const offer: InvestorCard[] = [];
+  const available = investorCards.filter((card) => !draftedIds.includes(card.id));
+  while (offer.length < count && offer.length < available.length) {
+    const weighted = available
+      .filter((card) => !offer.some((item) => item.id === card.id))
+      .flatMap((card) => Array.from({ length: cardWeight(card) }, () => card));
+    const picked = pick(weighted, nextSeed);
+    nextSeed = picked.seed;
+    offer.push(picked.item);
+  }
+  return { offer, seed: nextSeed };
+}
+
+function hasCard(state: GameState, effect: InvestorCard["effect"]) {
+  return state.investorDeck.some((card) => card.effect === effect);
 }
 
 export function initializeGame(
@@ -97,13 +126,18 @@ export function initializeGame(
       lastChangeReason: "Awaiting the opening bell.",
     };
   });
+  const initialDraft = generateDraftOffer(nextSeed, []);
+  nextSeed = initialDraft.seed;
 
   return {
-    phase: "observe",
+    phase: "draft",
     turn: 1,
     maxTurns: 10,
     philosophy,
     resources: { ...selected.resources },
+    investorDeck: [],
+    draftOffer: initialDraft.offer,
+    draftedCardIds: [],
     initialCapital: selected.resources.capital,
     companies: companyStates,
     portfolio: [],
@@ -116,7 +150,7 @@ export function initializeGame(
       id: "opening",
       turn: 1,
       title: `${selected.name} enters the room`,
-      body: `${capital(selected.resources.capital)} is ready. Observe the cast, think through the tradeoff, choose one edge, then commit before the world responds.`,
+      body: `${capital(selected.resources.capital)} is ready. Draft your first mental model, then observe the cast and let your philosophy take shape.`,
       tone: "neutral",
     }],
     currentEvent: null,
@@ -289,6 +323,42 @@ export function beginAllocation(state: GameState): GameState {
   return { ...state, phase: "think" };
 }
 
+export function draftInvestorCard(state: GameState, cardId: string): GameState {
+  if (state.phase !== "draft") return state;
+  const card = state.draftOffer.find((item) => item.id === cardId);
+  if (!card) return state;
+  const resources = { ...state.resources };
+  let wisdomGain = 1;
+  let legacyGain = 0;
+  if (card.effect === "discovery") resources.attention = clamp(resources.attention + 1, 0, 10);
+  if (card.effect === "risk") resources.patience = clamp(resources.patience + 1, 0, 10);
+  if (card.effect === "optionality") resources.optionality = clamp(resources.optionality + 1, 0, 10);
+  if (card.effect === "allocator") resources.capital += 50;
+  if (card.effect === "empire") legacyGain = 1;
+  if (card.rarity === "Epic") wisdomGain += 1;
+  if (card.rarity === "Legendary") {
+    wisdomGain += 2;
+    legacyGain += 1;
+  }
+  return {
+    ...state,
+    phase: "observe",
+    investorDeck: [...state.investorDeck, card],
+    draftedCardIds: [...state.draftedCardIds, card.id],
+    draftOffer: [],
+    resources,
+    wisdomScore: state.wisdomScore + wisdomGain,
+    legacyScore: state.legacyScore + legacyGain,
+    logs: [{
+      id: `draft-${state.turn}-${card.id}`,
+      turn: state.turn,
+      title: `Drafted ${card.title}`,
+      body: `${card.passiveAbility} Drawback: ${card.drawback}`,
+      tone: "neutral",
+    }, ...state.logs],
+  };
+}
+
 export function finishAllocation(state: GameState): GameState {
   if (state.phase !== "think") return state;
   return { ...state, phase: "choose" };
@@ -327,10 +397,17 @@ export function setPositionValue(
       behavior.builderBuys += 1;
       wisdomDelta += 1;
     }
+    if (hasCard(state, "builder") && (company.traits.builderDna >= 8 || company.traits.executionSkill >= 8)) wisdomDelta += 1;
+    if (hasCard(state, "contrarian") && company.traits.marketHype <= 4 && company.traits.balanceSheet >= 6) wisdomDelta += 1;
+    if (hasCard(state, "macro") && company.traits.commodityExposure >= 8) wisdomDelta += 1;
+    if (hasCard(state, "optionality") && company.traits.optionality >= 8) wisdomDelta += 1;
+    if (hasCard(state, "story") && company.traits.marketHype >= 8) wisdomDelta += company.traits.balanceSheet <= 4 ? -1 : 1;
   } else {
     behavior.trims += 1;
     if (soldAfterDrop) behavior.panicSells += 1;
     wisdomDelta += soldAfterDrop ? -2 : 1;
+    if (hasCard(state, "allocator") && !soldAfterDrop) wisdomDelta += 1;
+    if (hasCard(state, "risk") && soldAfterDrop) wisdomDelta += 1;
   }
 
   const portfolio = state.portfolio
@@ -402,18 +479,19 @@ export function performAction(
 
   if (type === "investigate" && company) {
     const trait = nextHiddenTrait(company);
-    if (!trait || state.resources.attention < 2) return state;
+    const attentionCost = hasCard(state, "discovery") ? 1 : 2;
+    if (!trait || state.resources.attention < attentionCost) return state;
     const action: PlayerAction = {
       ...base,
       title: `Investigated ${company.name}`,
-      description: `${traitMap[trait].label} revealed at ${company.traits[trait]}/10 for 2 Attention. Curiosity sharpened the thesis.`,
+      description: `${traitMap[trait].label} revealed at ${company.traits[trait]}/10 for ${attentionCost} Attention. Curiosity sharpened the thesis.`,
     };
     return useAction(state, action, {
-      resources: { ...state.resources, attention: state.resources.attention - 2 },
+      resources: { ...state.resources, attention: state.resources.attention - attentionCost },
       companies: state.companies.map((item) => item.id === companyId
         ? { ...item, revealedTraits: [...item.revealedTraits, trait] }
         : item),
-      wisdomScore: state.wisdomScore + 3,
+      wisdomScore: state.wisdomScore + 3 + (hasCard(state, "discovery") ? 1 : 0),
     }, "investigations");
   }
 
@@ -436,7 +514,7 @@ export function performAction(
         credibility: state.resources.credibility - 2,
       },
       legacyScore: state.legacyScore + 3,
-      wisdomScore: state.wisdomScore + 1,
+      wisdomScore: state.wisdomScore + 1 + (hasCard(state, "empire") ? 1 : 0),
     }, "credibilityPlays");
   }
 
@@ -451,22 +529,24 @@ export function performAction(
       companies: state.companies.map((item) => item.id === companyId
         ? { ...item, protectedThisTurn: true, convictionTurns: item.convictionTurns + 1 }
         : item),
-      wisdomScore: state.wisdomScore + (positionValue(state, company.id) > 0 ? 2 : 0),
+      wisdomScore: state.wisdomScore + (positionValue(state, company.id) > 0 ? 2 : 0) + (hasCard(state, "compounder") ? 1 : 0),
     }, "patiencePlays");
   }
 
-  if (type === "optionality" && company && state.resources.optionality >= 2) {
+  if (type === "optionality" && company) {
+    const optionalityCost = hasCard(state, "optionality") ? 1 : 2;
+    if (state.resources.optionality < optionalityCost) return state;
     const action: PlayerAction = {
       ...base,
       title: `Placed an asymmetric bet`,
       description: `${company.name} receives amplified event upside and downside this turn. Optionality is not safety; it is shape.`,
     };
     return useAction(state, action, {
-      resources: { ...state.resources, optionality: state.resources.optionality - 2 },
+      resources: { ...state.resources, optionality: state.resources.optionality - optionalityCost },
       companies: state.companies.map((item) => item.id === companyId
         ? { ...item, asymmetricBet: true }
         : item),
-      wisdomScore: state.wisdomScore + 1,
+      wisdomScore: state.wisdomScore + 1 + (hasCard(state, "optionality") ? 1 : 0),
     }, "optionalityBets");
   }
 
@@ -481,7 +561,7 @@ export function performAction(
         ? { ...item, convictionTurns: item.convictionTurns + 1 }
         : item),
       legacyScore: state.legacyScore + state.portfolio.length,
-      wisdomScore: state.wisdomScore + Math.min(3, state.portfolio.length),
+      wisdomScore: state.wisdomScore + Math.min(3, state.portfolio.length) + (hasCard(state, "compounder") ? 1 : 0),
     }, "holds");
   }
 
@@ -575,8 +655,13 @@ export function drawEvent(state: GameState): GameState {
     const cashFlowAdjusted = state.philosophy === "cash-flow-collector"
       ? rawMove * (rawMove >= 0 ? 0.8 : 0.7)
       : rawMove;
+    const cardAdjusted =
+      hasCard(state, "risk") && cashFlowAdjusted < -0.12 ? cashFlowAdjusted + 0.04 :
+      hasCard(state, "compounder") && company.traits.balanceSheet >= 8 && cashFlowAdjusted < 0 ? cashFlowAdjusted * 0.75 :
+      hasCard(state, "momentum") && company.traits.marketHype >= 8 && cashFlowAdjusted > 0 ? cashFlowAdjusted + 0.03 :
+      cashFlowAdjusted;
     const totalMove = clamp(
-      cashFlowAdjusted,
+      cardAdjusted,
       -0.44,
       0.48,
     );
@@ -604,7 +689,12 @@ export function drawEvent(state: GameState): GameState {
     state.lastAction?.type === "patience" && after >= before * 0.96 ? 2 :
     state.lastAction?.type === "optionality" && after < before ? -2 : 0;
   const survivalWisdom = after >= before ? 1 : worstSafeWisdom(updatedCompanies, targets.ids);
-  const wisdomChange = actionWisdom + survivalWisdom;
+  const cardWisdom =
+    (hasCard(state, "risk") && after < before ? 1 : 0) +
+    (hasCard(state, "story") && eventPick.item.id === "hype-wave" ? 2 : 0) +
+    (hasCard(state, "macro") && eventPick.item.targets === "commodity" ? 2 : 0) +
+    (hasCard(state, "empire") && state.portfolio.length >= 3 ? 1 : 0);
+  const wisdomChange = actionWisdom + survivalWisdom + cardWisdom;
   const movers = updatedCompanies.map<Mover>((company) => ({
     companyId: company.id,
     name: company.name,
@@ -675,20 +765,24 @@ export function continueTurn(state: GameState): GameState {
   if (state.phase !== "reflect") return state;
   if (state.turn >= state.maxTurns) return { ...state, phase: "ended" };
   const nextTurn = state.turn + 1;
+  const shouldDraft = draftTurns.has(nextTurn);
+  const draft = shouldDraft ? generateDraftOffer(state.seed, state.draftedCardIds) : { offer: [], seed: state.seed };
   return {
     ...state,
-    phase: "observe",
+    phase: shouldDraft ? "draft" : "observe",
     turn: nextTurn,
     currentEvent: null,
     lastAction: null,
     actionUsed: false,
     allocationChanged: false,
+    draftOffer: draft.offer,
     turnStartValue: netWorth(state),
     resources: {
       ...state.resources,
       attention: clamp(state.resources.attention + 0.5, 0, 10),
       patience: clamp(state.resources.patience + 0.25, 0, 10),
     },
+    seed: draft.seed,
   };
 }
 

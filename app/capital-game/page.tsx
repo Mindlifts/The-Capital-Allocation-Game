@@ -6,6 +6,7 @@ import {
   beginCommit,
   beginAllocation,
   continueTurn,
+  draftInvestorCard,
   drawEvent,
   finishAllocation,
   inferPhilosophyProgression,
@@ -20,6 +21,7 @@ import type { GameState, PhilosophyKey, PlayerActionType } from "@/game/types";
 import { CompanyCard } from "@/game/components/CompanyCard";
 import { EndScreen } from "@/game/components/EndScreen";
 import { EventOverlay } from "@/game/components/EventOverlay";
+import { InvestorDraft } from "@/game/components/InvestorDraft";
 import { Onboarding } from "@/game/components/Onboarding";
 import { ResourceBar } from "@/game/components/ResourceBar";
 import { TurnStepper } from "@/game/components/TurnStepper";
@@ -153,6 +155,15 @@ export default function CapitalGamePage() {
   const latestEvent = state.logs.find((log) => log.id.startsWith("event-"));
   const progression = inferPhilosophyProgression(state);
   const phaseCopy = {
+    draft: {
+      title: "Draft",
+      body: "Choose one mental model. It stays active and becomes part of your philosophy.",
+      button: "Draft a card",
+      changed: state.investorDeck.length ? "A new philosophy slot opened." : "Your run begins by choosing a mental model.",
+      why: "Investor cards create persistent strengths, drawbacks, and playstyle pressure.",
+      options: "Compare passive ability, drawback, rarity, and synergies.",
+      tradeoff: "Every card makes one way of thinking easier and another way more dangerous.",
+    },
     observe: {
       title: "Observe",
       body: state.turn === 1 ? "Meet the cast. Notice hype, danger, hidden instincts, and who already feels tempting." : "Something changed. Read the recap before touching anything.",
@@ -349,6 +360,20 @@ export default function CapitalGamePage() {
             <p className="identity-hint">{progression.primary.description}</p>
           </div>
 
+          <div className="rail-section active-deck">
+            <span className="eyebrow">INVESTOR CARDS</span>
+            <h2>{state.investorDeck.length ? `${state.investorDeck.length} active` : "No cards yet"}</h2>
+            <div className="deck-list">
+              {state.investorDeck.slice(-5).map((card) => (
+                <div className={`mini-investor-card mini-${card.rarity.toLowerCase()}`} key={card.id}>
+                  <span>{card.icon}</span>
+                  <div><b>{card.title}</b><small>{card.rarity} · {card.effect}</small></div>
+                </div>
+              ))}
+            </div>
+            {!state.investorDeck.length && <p>Your first draft will become the seed of your philosophy.</p>}
+          </div>
+
           <div className="rail-section mandate">
             <span className="eyebrow">STARTING POWER</span>
             <h2>{philosophyMap[state.philosophy].name}</h2>
@@ -392,6 +417,14 @@ export default function CapitalGamePage() {
         />
       )}
       {showOnboarding && <Onboarding onDone={() => setShowOnboarding(false)} />}
+      {state.phase === "draft" && (
+        <InvestorDraft
+          turn={state.turn}
+          offer={state.draftOffer}
+          deckSize={state.investorDeck.length}
+          onDraft={(cardId) => setState((current) => current ? draftInvestorCard(current, cardId) : current)}
+        />
+      )}
     </main>
   );
 }
