@@ -28,12 +28,8 @@ const pick = <T,>(items: T[], seed: number) => {
   return { item: items[Math.floor(roll.value * items.length)], seed: roll.seed };
 };
 
-const money = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
+const capital = (value: number) =>
+  `${Math.round(value).toLocaleString("en-US")} capital`;
 
 const emptyBehavior = (): BehaviorStats => ({
   investigations: 0,
@@ -118,7 +114,7 @@ export function initializeGame(
       id: "opening",
       turn: 1,
       title: `${selected.name} enters the room`,
-      body: `${money(selected.resources.capital)} is ready. Review the market, allocate conviction, then choose one edge before uncertainty arrives.`,
+      body: `${capital(selected.resources.capital)} is ready. Read the cast, commit carefully, then choose one edge before the world responds.`,
       tone: "neutral",
     }],
     currentEvent: null,
@@ -130,6 +126,7 @@ export function initializeGame(
     decisions: [],
     runId: seed,
     legacyScore: 0,
+    wisdomScore: 0,
     seed: nextSeed,
   };
 }
@@ -159,12 +156,12 @@ export function nextHiddenTrait(company: CompanyState) {
 
 export function investorTakeaway(company: CompanyState) {
   const traits = company.traits;
-  if (traits.marketHype >= 8 && traits.balanceSheet <= 4) return "Exciting story; fragile funding.";
-  if (traits.builderDna >= 8 && traits.executionSkill >= 7) return "Real operators may outrun volatility.";
-  if (traits.balanceSheet >= 8 && traits.marketHype <= 4) return "Neglected quality with room to rerate.";
-  if (traits.optionality >= 8 && traits.geologicalLuck >= 7) return "Asymmetric upside, expensive uncertainty.";
-  if (traits.politicalRisk >= 7) return "The asset is good; the map is not.";
-  return "The thesis depends on what is still hidden.";
+  if (traits.marketHype >= 8 && traits.balanceSheet <= 4) return "Charismatic, fragile, and dangerous to believe too quickly.";
+  if (traits.builderDna >= 8 && traits.executionSkill >= 7) return "This character can turn conviction into reality.";
+  if (traits.balanceSheet >= 8 && traits.marketHype <= 4) return "Quiet strength. The crowd may be missing the durable thing.";
+  if (traits.optionality >= 8 && traits.geologicalLuck >= 7) return "A doorway to a larger story, with teeth on the hinge.";
+  if (traits.politicalRisk >= 7) return "The promise is real; the map is hostile.";
+  return "The read depends on what remains hidden.";
 }
 
 export function riskLevel(company: CompanyState) {
@@ -201,13 +198,22 @@ export function setPositionValue(
   const shares = boundedTarget / company.price;
   const soldAfterDrop = difference < 0 && company.recentChange < -0.08;
   const behavior = { ...state.behavior };
+  let wisdomDelta = 0;
   if (difference > 0) {
     if (company.traits.marketHype >= 8) behavior.hypeBuys += 1;
-    if (company.traits.marketHype <= 4 && company.traits.balanceSheet >= 6) behavior.valueBuys += 1;
-    if (company.traits.builderDna >= 7 && company.traits.executionSkill >= 7) behavior.builderBuys += 1;
+    if (company.traits.marketHype >= 8 && company.traits.balanceSheet <= 4) wisdomDelta -= 2;
+    if (company.traits.marketHype <= 4 && company.traits.balanceSheet >= 6) {
+      behavior.valueBuys += 1;
+      wisdomDelta += 2;
+    }
+    if (company.traits.builderDna >= 7 && company.traits.executionSkill >= 7) {
+      behavior.builderBuys += 1;
+      wisdomDelta += 1;
+    }
   } else {
     behavior.trims += 1;
     if (soldAfterDrop) behavior.panicSells += 1;
+    wisdomDelta += soldAfterDrop ? -2 : 1;
   }
 
   const portfolio = state.portfolio
@@ -233,12 +239,13 @@ export function setPositionValue(
     records,
     behavior,
     allocationChanged: true,
+    wisdomScore: Math.max(0, state.wisdomScore + wisdomDelta),
     resources: { ...state.resources, capital: state.resources.capital - difference },
     logs: [{
       id: `allocation-${state.turn}-${companyId}-${Date.now()}`,
       turn: state.turn,
-      title: difference > 0 ? `Increased ${company.name}` : `Trimmed ${company.name}`,
-      body: `${money(Math.abs(difference))} ${difference > 0 ? "added to" : "removed from"} the position. ${investorTakeaway(company)}`,
+      title: difference > 0 ? `Deepened commitment to ${company.name}` : `Reduced commitment to ${company.name}`,
+      body: `${capital(Math.abs(difference))} ${difference > 0 ? "pledged to" : "freed from"} the thesis. ${investorTakeaway(company)}`,
       tone: difference > 0 ? "positive" : "neutral",
     }, ...state.logs],
   };
@@ -282,21 +289,22 @@ export function performAction(
     const action: PlayerAction = {
       ...base,
       title: `Investigated ${company.name}`,
-      description: `${traitMap[trait].label} revealed at ${company.traits[trait]}/10 for 2 Attention.`,
+      description: `${traitMap[trait].label} revealed at ${company.traits[trait]}/10 for 2 Attention. Curiosity sharpened the thesis.`,
     };
     return useAction(state, action, {
       resources: { ...state.resources, attention: state.resources.attention - 2 },
       companies: state.companies.map((item) => item.id === companyId
         ? { ...item, revealedTraits: [...item.revealedTraits, trait] }
         : item),
+      wisdomScore: state.wisdomScore + 3,
     }, "investigations");
   }
 
   if (type === "credibility" && company && state.resources.credibility >= 2) {
     const action: PlayerAction = {
       ...base,
-      title: `Opened a private channel`,
-      description: `Credibility secured favorable access to ${company.name}: a $25 placement rebate and Management Quality reveal.`,
+      title: `Called in a trusted favor`,
+      description: `Credibility opened a backchannel with ${company.name}: 25 capital returned and Management Quality revealed.`,
     };
     const reveal = company.revealedTraits.includes("managementQuality")
       ? company.revealedTraits
@@ -311,6 +319,7 @@ export function performAction(
         credibility: state.resources.credibility - 2,
       },
       legacyScore: state.legacyScore + 3,
+      wisdomScore: state.wisdomScore + 1,
     }, "credibilityPlays");
   }
 
@@ -325,6 +334,7 @@ export function performAction(
       companies: state.companies.map((item) => item.id === companyId
         ? { ...item, protectedThisTurn: true, convictionTurns: item.convictionTurns + 1 }
         : item),
+      wisdomScore: state.wisdomScore + (positionValue(state, company.id) > 0 ? 2 : 0),
     }, "patiencePlays");
   }
 
@@ -339,6 +349,7 @@ export function performAction(
       companies: state.companies.map((item) => item.id === companyId
         ? { ...item, asymmetricBet: true }
         : item),
+      wisdomScore: state.wisdomScore + 1,
     }, "optionalityBets");
   }
 
@@ -346,13 +357,14 @@ export function performAction(
     const action: PlayerAction = {
       ...base,
       title: "Held through uncertainty",
-      description: "No scarce resource spent. Existing positions build one turn of conviction and a small legacy bonus.",
+      description: "No scarce resource spent. Existing commitments build one turn of conviction and a small wisdom bonus.",
     };
     return useAction(state, action, {
       companies: state.companies.map((item) => positionValue(state, item.id) > 0
         ? { ...item, convictionTurns: item.convictionTurns + 1 }
         : item),
       legacyScore: state.legacyScore + state.portfolio.length,
+      wisdomScore: state.wisdomScore + Math.min(3, state.portfolio.length),
     }, "holds");
   }
 
@@ -397,10 +409,10 @@ function philosophyModifier(state: GameState, company: CompanyState, event: Game
 
 function lessonFor(state: GameState, worst: Mover, event: GameEvent) {
   if (event.id === "cost-shock") return "Strong balance sheets absorb pain that weak stories cannot.";
-  if (state.behavior.hypeBuys > state.behavior.valueBuys + 1) return "You are leaning into narrative. Check who can fund the promise.";
+  if (state.behavior.hypeBuys > state.behavior.valueBuys + 1) return "You are leaning into charisma. Check whether the character can survive its own story.";
   if (state.lastAction?.type === "patience") return "Patience is useful when conviction rests on quality, not hope.";
-  if (worst.changePercent < -18) return "Large drawdowns expose position sizing before they expose intelligence.";
-  return "Price moved first. Your job is to decide whether the thesis moved with it.";
+  if (worst.changePercent < -18) return "Pain exposes sizing before it exposes intelligence.";
+  return "The world moved first. Your job is to decide whether the thesis moved with it.";
 }
 
 export function drawEvent(state: GameState): GameState {
@@ -412,6 +424,7 @@ export function drawEvent(state: GameState): GameState {
   }
   const targets = eventTargets(eventPick.item, state, eventPick.seed);
   const before = netWorth(state);
+  const wisdomBefore = state.wisdomScore;
   let seed = targets.seed;
   const impactLines: string[] = [];
   let philosophyText = "";
@@ -451,7 +464,7 @@ export function drawEvent(state: GameState): GameState {
       0.48,
     );
     const price = Math.max(1, Number((previousPrice * (1 + totalMove)).toFixed(2)));
-    if (isTarget) impactLines.push(`${company.ticker} ${totalMove >= 0 ? "+" : ""}${(totalMove * 100).toFixed(1)}%`);
+    if (isTarget) impactLines.push(`${company.name} ${totalMove >= 0 ? "+" : ""}${(totalMove * 100).toFixed(1)}%`);
     return {
       ...company,
       traits,
@@ -468,6 +481,13 @@ export function drawEvent(state: GameState): GameState {
 
   const afterState = { ...state, companies: updatedCompanies };
   const after = netWorth(afterState);
+  const actionWisdom =
+    state.lastAction?.type === "investigate" ? 1 :
+    state.lastAction?.type === "hold" && after >= before ? 2 :
+    state.lastAction?.type === "patience" && after >= before * 0.96 ? 2 :
+    state.lastAction?.type === "optionality" && after < before ? -2 : 0;
+  const survivalWisdom = after >= before ? 1 : worstSafeWisdom(updatedCompanies, targets.ids);
+  const wisdomChange = actionWisdom + survivalWisdom;
   const movers = updatedCompanies.map<Mover>((company) => ({
     companyId: company.id,
     name: company.name,
@@ -492,6 +512,7 @@ export function drawEvent(state: GameState): GameState {
     portfolioBefore: before,
     portfolioAfter: after,
     portfolioChange: after - before,
+    wisdomChange,
     bestMover,
     worstMover,
     lessonHint: lessonFor(state, worstMover, eventPick.item),
@@ -507,7 +528,7 @@ export function drawEvent(state: GameState): GameState {
     id: `event-${state.turn}-${eventPick.item.id}`,
     turn: state.turn,
     title: eventPick.item.title,
-    body: `${narrative} Portfolio ${after - before >= 0 ? "gained" : "lost"} ${money(Math.abs(after - before))}.`,
+    body: `${narrative} Commitments ${after - before >= 0 ? "strengthened" : "weakened"} by ${capital(Math.abs(after - before))}. Wisdom ${wisdomChange >= 0 ? "+" : ""}${wisdomChange}.`,
     tone: after >= before ? "positive" : "negative",
   };
   return {
@@ -517,8 +538,15 @@ export function drawEvent(state: GameState): GameState {
     currentEvent: resolvedEvent,
     logs: [log, ...state.logs],
     legacyScore: state.legacyScore + legacyGain,
+    wisdomScore: Math.max(0, wisdomBefore + wisdomChange),
     seed,
   };
+}
+
+function worstSafeWisdom(companies: CompanyState[], targetIds: string[]) {
+  const targeted = companies.filter((company) => targetIds.includes(company.id));
+  if (targeted.some((company) => company.traits.balanceSheet <= 3 && company.recentChange < -0.12)) return -1;
+  return 0;
 }
 
 export function revealResult(state: GameState): GameState {
@@ -585,7 +613,7 @@ export function summarizeGame(state: GameState): GameSummary {
         ? "Asymmetric bets only work when the downside stays survivable."
         : "Your strongest edge was matching patience with company quality.";
   const bestDecision = state.decisions.find((decision) => decision.type === "investigate")?.title
-    ?? state.logs.find((log) => log.title.startsWith("Increased"))?.title
+    ?? state.logs.find((log) => log.title.startsWith("Deepened"))?.title
     ?? "Preserved capital";
   const worstDecision = behavior.panicSells
     ? "Sold into a drawdown"
@@ -594,6 +622,7 @@ export function summarizeGame(state: GameState): GameSummary {
     finalValue,
     returnPercent: ((finalValue - state.initialCapital) / state.initialCapital) * 100,
     legacyScore: Math.max(0, state.legacyScore + Math.round((finalValue - state.initialCapital) / 18)),
+    wisdomScore: state.wisdomScore,
     bestInvestment: name(results[0]?.companyId),
     worstInvestment: name(results[results.length - 1]?.companyId),
     bestDecision,

@@ -1,21 +1,38 @@
 # Capital Allocation Game
 
-A fictional investing strategy game about allocating more than money. Build a
-portfolio, investigate hidden company DNA, react to market events, and discover
-your investing style across a compact ten-turn campaign.
+A fictional strategy roguelike about capital allocation under uncertainty.
 
-No real companies, tickers, market data, or investment advice are used.
+The player is not trying to memorize finance or optimize a spreadsheet. The
+player is building an investment philosophy through curiosity, incomplete
+information, scarce resources, conviction, regret, discovery, and adaptation.
 
-Each turn follows a clear five-step loop:
+Companies are characters. Philosophies are powers. Events are the world's
+response. Money is only one score; wisdom is the real progression.
 
-1. Review market changes.
-2. Allocate or rebalance capital.
-3. Choose one scarce-resource action.
-4. Resolve a cinematic market event.
-5. Read the portfolio impact and lesson hint.
+No real companies, real tickers, market data, or investment advice are used.
 
-Runs randomize trait values, hidden-trait order, and event sequences while
-preserving the same fictional company universe.
+## Current run loop
+
+Each ten-turn run follows a clear rhythm:
+
+1. Read the world.
+2. Commit or rebalance capital.
+3. Use one doctrine power.
+4. Face a world response card.
+5. Read the consequence and gain wisdom.
+
+Runs randomize trait values, hidden-trait order, and event sequence while
+preserving the fictional universe.
+
+## Architecture
+
+- `app/capital-game/page.tsx` contains the route-level game UI.
+- `game/engine.ts` owns deterministic game state transitions.
+- `game/types.ts` defines state, character, event, philosophy, and report types.
+- `game/config` holds the fictional universe: companies, events, traits,
+  archetypes, and philosophies.
+- `game/components` holds reusable game UI components.
+- `DESIGN_PROPOSAL.md` documents the roguelike pivot and the next design target.
 
 ## Run locally
 
@@ -32,6 +49,3 @@ Open [http://localhost:3000/capital-game](http://localhost:3000/capital-game).
 pnpm typecheck
 pnpm build
 ```
-
-Game data lives in `game/config`, simulation logic in `game/engine.ts`, and the
-route UI in `app/capital-game`.

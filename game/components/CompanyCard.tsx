@@ -34,7 +34,7 @@ export function CompanyCard({
   const hiddenCount = allTraits.length - company.revealedTraits.length;
   const hiddenTrait = nextHiddenTrait(company);
   const maxPosition = positionValue + availableCapital;
-  const ownership = positionValue > 0 ? Math.round(positionValue) : 0;
+  const commitment = positionValue > 0 ? Math.round(positionValue) : 0;
 
   return (
     <article
@@ -44,17 +44,17 @@ export function CompanyCard({
     >
       <div className="card-rarity-line">
         <span>{archetype.label}</span>
-        <span>{company.commodity} // {company.ticker}</span>
+        <span>{company.role}</span>
       </div>
 
       <div className="company-topline">
-        <div className="company-symbol"><span>{company.ticker.slice(0, 2)}</span></div>
+        <div className="company-symbol"><span>{company.name.slice(0, 2)}</span></div>
         <div className="company-name">
           <h3>{company.name}</h3>
           <span>{company.tagline}</span>
         </div>
         <div className="company-price">
-          <strong>${company.price.toFixed(2)}</strong>
+          <strong>{Math.round(company.price * 4)}</strong>
           <span className={move >= 0 ? "gain" : "loss"}>
             {move >= 0 ? "+" : ""}{move.toFixed(1)}%
           </span>
@@ -69,9 +69,14 @@ export function CompanyCard({
       </div>
 
       <div className="ownership-strip">
-        <span>Your ownership <b>{ownership ? `$${ownership}` : "No position"}</b></span>
+        <span>Your commitment <b>{commitment ? `${commitment} capital` : "Uncommitted"}</b></span>
         <span>Hype <b>{company.traits.marketHype}/10</b></span>
         <span>Risk <b className={`risk-${riskLevel(company).toLowerCase()}`}>{riskLevel(company)}</b></span>
+      </div>
+
+      <div className="character-read">
+        <p><span>Wants</span>{company.desire}</p>
+        <p><span>Flaw</span>{company.flaw}</p>
       </div>
 
       <div className="trait-grid">
@@ -95,7 +100,7 @@ export function CompanyCard({
       </div>
 
       <div className="takeaway">
-        <span>INVESTOR TAKEAWAY</span>
+        <span>FIELD READ</span>
         <p>{investorTakeaway(company)}</p>
       </div>
 
@@ -107,8 +112,8 @@ export function CompanyCard({
       {selected && phase === "allocate" && (
         <div className="allocation-panel" onClick={(event) => event.stopPropagation()}>
           <div className="allocation-label">
-            <span>Set position size</span>
-            <strong>${Math.round(positionValue)}</strong>
+            <span>Set commitment</span>
+            <strong>{Math.round(positionValue)} capital</strong>
           </div>
           <input
             aria-label={`Allocation to ${company.name}`}
@@ -120,25 +125,25 @@ export function CompanyCard({
             onChange={(event) => onAllocate(Number(event.target.value))}
           />
           <div className="quick-actions">
-            <button type="button" onClick={() => onAllocate(Math.max(0, positionValue - 100))}>Trim $100</button>
-            <button type="button" onClick={() => onAllocate(Math.min(maxPosition, positionValue + 100))}>Add $100</button>
-            <button type="button" onClick={() => onAllocate(Math.min(maxPosition, positionValue + 250))}>Add $250</button>
-            <button type="button" onClick={() => onAllocate(0)}>Exit</button>
+            <button type="button" onClick={() => onAllocate(Math.max(0, positionValue - 100))}>Trim 100</button>
+            <button type="button" onClick={() => onAllocate(Math.min(maxPosition, positionValue + 100))}>Pledge 100</button>
+            <button type="button" onClick={() => onAllocate(Math.min(maxPosition, positionValue + 250))}>Pledge 250</button>
+            <button type="button" onClick={() => onAllocate(0)}>Abandon</button>
           </div>
         </div>
       )}
 
       {selected && phase === "action" && (
         <div className="action-panel" onClick={(event) => event.stopPropagation()}>
-          <p>Choose your one edge for this turn.</p>
+          <p>Choose your one power for this turn.</p>
           <div className="card-actions">
             <button disabled={actionUsed || !hiddenTrait || resources.attention < 2} onClick={() => onAction("investigate")}>
               <b>◎ Investigate</b>
-              <span>2 Attention · reveal {hiddenTrait ? traitMap[hiddenTrait].label : "DNA"}</span>
+              <span>2 Attention · reveal {hiddenTrait ? traitMap[hiddenTrait].label : "instinct"}</span>
             </button>
             <button disabled={actionUsed || resources.credibility < 2} onClick={() => onAction("credibility")}>
-              <b>◆ Private Access</b>
-              <span>2 Credibility · improve entry</span>
+              <b>◆ Trusted Favor</b>
+              <span>2 Credibility · open a backchannel</span>
             </button>
             <button disabled={actionUsed || resources.patience < 2 || positionValue <= 0} onClick={() => onAction("patience")}>
               <b>◴ Hold Conviction</b>
