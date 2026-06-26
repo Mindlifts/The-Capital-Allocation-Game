@@ -97,7 +97,7 @@ export function initializeGame(
   });
 
   return {
-    phase: "review",
+    phase: "observe",
     turn: 1,
     maxTurns: 10,
     philosophy,
@@ -114,7 +114,7 @@ export function initializeGame(
       id: "opening",
       turn: 1,
       title: `${selected.name} enters the room`,
-      body: `${capital(selected.resources.capital)} is ready. Read the cast, commit carefully, then choose one edge before the world responds.`,
+      body: `${capital(selected.resources.capital)} is ready. Observe the cast, think through the tradeoff, choose one edge, then commit before the world responds.`,
       tone: "neutral",
     }],
     currentEvent: null,
@@ -173,13 +173,18 @@ export function riskLevel(company: CompanyState) {
 }
 
 export function beginAllocation(state: GameState): GameState {
-  if (state.phase !== "review") return state;
-  return { ...state, phase: "allocate" };
+  if (state.phase !== "observe") return state;
+  return { ...state, phase: "think" };
 }
 
 export function finishAllocation(state: GameState): GameState {
-  if (state.phase !== "allocate") return state;
-  return { ...state, phase: "action" };
+  if (state.phase !== "think") return state;
+  return { ...state, phase: "choose" };
+}
+
+export function beginCommit(state: GameState): GameState {
+  if (state.phase !== "choose" || !state.actionUsed) return state;
+  return { ...state, phase: "commit" };
 }
 
 export function setPositionValue(
@@ -187,7 +192,7 @@ export function setPositionValue(
   companyId: string,
   targetValue: number,
 ): GameState {
-  if (state.phase !== "allocate") return state;
+  if (state.phase !== "commit") return state;
   const company = state.companies.find((item) => item.id === companyId);
   if (!company) return state;
   const current = state.portfolio.find((item) => item.companyId === companyId);
@@ -257,7 +262,7 @@ function useAction(
   updates: Partial<GameState>,
   behaviorKey: keyof BehaviorStats,
 ): GameState {
-  if (state.phase !== "action" || state.actionUsed) return state;
+  if (state.phase !== "choose" || state.actionUsed) return state;
   return {
     ...state,
     ...updates,
@@ -416,7 +421,7 @@ function lessonFor(state: GameState, worst: Mover, event: GameEvent) {
 }
 
 export function drawEvent(state: GameState): GameState {
-  if (state.phase !== "action" || !state.actionUsed) return state;
+  if (state.phase !== "commit" || !state.actionUsed) return state;
   let eventPick = pick(events, state.seed);
   const previousEventTitle = state.logs.find((log) => log.id.startsWith("event-"))?.title;
   if (previousEventTitle === eventPick.item.title) {
@@ -475,7 +480,7 @@ export function drawEvent(state: GameState): GameState {
       recentChange: totalMove,
       protectedThisTurn: false,
       asymmetricBet: false,
-      lastChangeReason: isTarget ? eventPick.item.title : "Market repricing",
+      lastChangeReason: isTarget ? eventPick.item.title : "World pressure",
     };
   });
 
@@ -497,7 +502,7 @@ export function drawEvent(state: GameState): GameState {
   const bestMover = movers[0];
   const worstMover = movers[movers.length - 1];
   const targetNames = updatedCompanies.filter((company) => targets.ids.includes(company.id)).map((company) => company.name);
-  const narrative = eventPick.item.narrative.replace("{company}", targetNames[0] ?? "The market");
+  const narrative = eventPick.item.narrative.replace("{company}", targetNames[0] ?? "The world");
   const effectText = eventPick.item.effects.map((effect) => {
     const parts: string[] = [];
     if (effect.priceDelta) parts.push(`${effect.priceDelta > 0 ? "+" : ""}${Math.round(effect.priceDelta * 100)}% event pressure`);
@@ -533,7 +538,7 @@ export function drawEvent(state: GameState): GameState {
   };
   return {
     ...state,
-    phase: "event",
+    phase: "world",
     companies: updatedCompanies,
     currentEvent: resolvedEvent,
     logs: [log, ...state.logs],
@@ -550,17 +555,17 @@ function worstSafeWisdom(companies: CompanyState[], targetIds: string[]) {
 }
 
 export function revealResult(state: GameState): GameState {
-  if (state.phase !== "event") return state;
-  return { ...state, phase: "result" };
+  if (state.phase !== "world") return state;
+  return { ...state, phase: "reflect" };
 }
 
 export function continueTurn(state: GameState): GameState {
-  if (state.phase !== "result") return state;
+  if (state.phase !== "reflect") return state;
   if (state.turn >= state.maxTurns) return { ...state, phase: "ended" };
   const nextTurn = state.turn + 1;
   return {
     ...state,
-    phase: "review",
+    phase: "observe",
     turn: nextTurn,
     currentEvent: null,
     lastAction: null,

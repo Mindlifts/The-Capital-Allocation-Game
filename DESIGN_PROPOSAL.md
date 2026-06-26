@@ -6,6 +6,21 @@ This project should become a short strategy roguelike about judgment under uncer
 
 The game should feel closer to a card battler plus civilization map than a finance dashboard. Capital remains one resource, but wisdom is the real progression.
 
+## Turn rhythm
+
+Every turn should move through one clear emotional arc:
+
+Observe → Think → Choose → Commit → World Reacts → Reflect → Repeat.
+
+Each beat must answer a player question:
+
+- What changed?
+- Why?
+- What are my options?
+- What is the tradeoff?
+
+Interactions that do not create information, tension, commitment, or reflection should be removed.
+
 ## What should stay
 
 - The `/capital-game` route. It already gives the project a focused playable surface.

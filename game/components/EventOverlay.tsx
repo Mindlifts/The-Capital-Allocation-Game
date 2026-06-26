@@ -19,14 +19,14 @@ export function EventOverlay({
 
   return (
     <div className="event-backdrop">
-      {state.phase === "event" ? (
+      {state.phase === "world" ? (
         <div className={`event-card event-${event.tone}`}>
           <div className="event-orbit orbit-one" />
           <div className="event-orbit orbit-two" />
           <span className="event-kicker">{event.kicker}</span>
           <div className="event-art">
             <span>{event.tone === "positive" ? "↗" : event.tone === "negative" ? "↘" : "≈"}</span>
-            <small>CINEMATIC EVENT // {event.id.toUpperCase()}</small>
+            <small>WORLD RESPONSE // {event.id.toUpperCase()}</small>
           </div>
           <p className="event-label">WORLD RESPONSE // TURN {state.turn}</p>
           <h2>{event.title}</h2>

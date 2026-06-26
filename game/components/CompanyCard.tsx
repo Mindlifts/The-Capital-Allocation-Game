@@ -109,7 +109,7 @@ export function CompanyCard({
         <b className={move >= 0 ? "gain" : "loss"}>{move ? `${move > 0 ? "+" : ""}${move.toFixed(1)}%` : "Opening"}</b>
       </div>
 
-      {selected && phase === "allocate" && (
+      {selected && phase === "commit" && (
         <div className="allocation-panel" onClick={(event) => event.stopPropagation()}>
           <div className="allocation-label">
             <span>Set commitment</span>
@@ -133,7 +133,7 @@ export function CompanyCard({
         </div>
       )}
 
-      {selected && phase === "action" && (
+      {selected && phase === "choose" && (
         <div className="action-panel" onClick={(event) => event.stopPropagation()}>
           <p>Choose your one power for this turn.</p>
           <div className="card-actions">

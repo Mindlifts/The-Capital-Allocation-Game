@@ -130,11 +130,12 @@ export interface TurnLog {
 }
 
 export type TurnPhase =
-  | "review"
-  | "allocate"
-  | "action"
-  | "event"
-  | "result"
+  | "observe"
+  | "think"
+  | "choose"
+  | "commit"
+  | "world"
+  | "reflect"
   | "ended";
 
 export type PlayerActionType =

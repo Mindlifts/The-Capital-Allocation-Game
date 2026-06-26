@@ -442,7 +442,7 @@ body::before {
   z-index: 9;
   min-height: 58px;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   border-bottom: 1px solid var(--line);
   background: rgba(9, 13, 16, .96);
   backdrop-filter: blur(14px);
@@ -488,6 +488,29 @@ body::before {
 .current-directive > strong { color: var(--gold); font: 8px var(--mono); letter-spacing: .13em; }
 .current-directive div b { display: block; font-size: 14px; }
 .current-directive div p { color: var(--muted); font-size: 11px; margin: 4px 0 0; }
+.decision-questions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: -14px 0 27px;
+}
+.decision-questions div {
+  min-height: 86px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, rgba(255,255,255,.026), rgba(255,255,255,.01));
+}
+.decision-questions span {
+  color: var(--gold);
+  font: 7px var(--mono);
+  letter-spacing: .13em;
+}
+.decision-questions p {
+  margin: 7px 0 0;
+  color: #aab4b1;
+  font-size: 10px;
+  line-height: 1.5;
+}
 .portfolio-totals { text-align: right; }
 .market-recap {
   display: grid;
@@ -702,6 +725,7 @@ body::before {
   .turn-stepper > div b { display: block; font: 7px var(--mono); }
   .current-directive { grid-template-columns: 1fr auto; }
   .current-directive > span { grid-column: 1 / -1; }
+  .decision-questions { grid-template-columns: 1fr 1fr; }
   .market-recap { grid-template-columns: 1fr; gap: 5px; }
   .decision-rail { padding-bottom: 110px; }
   .turn-action {
@@ -732,6 +756,7 @@ body::before {
   .turn-stepper b { font-size: 6px !important; }
   .current-directive { padding: 13px; gap: 8px; }
   .current-directive > strong { display: none; }
+  .decision-questions { grid-template-columns: 1fr; margin-top: -8px; }
   .market-toolbar h1 { font-size: 25px; }
   .portfolio-totals { display: grid; grid-template-columns: repeat(2, 1fr); text-align: left; gap: 4px; }
   .portfolio-totals span { padding: 7px; background: #0e1417; font-size: 6px; }
