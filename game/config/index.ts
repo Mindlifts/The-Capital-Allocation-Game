@@ -6,4 +6,5 @@ export * from "./investorCards";
 export * from "./opportunities";
 export * from "./philosophies";
 export * from "./regions";
+export * from "./routes";
 export * from "./traits";
