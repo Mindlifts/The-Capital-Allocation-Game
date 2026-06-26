@@ -1,4 +1,4 @@
-import { companies, events, investorCards, philosophyMap, traitMap } from "./config";
+import { companies, events, industryMap, investorCards, opportunities, philosophyMap, regionMap, traitMap } from "./config";
 import type {
   BehaviorStats,
   CompanyState,
@@ -87,6 +87,18 @@ function hasCard(state: GameState, effect: InvestorCard["effect"]) {
   return state.investorDeck.some((card) => card.effect === effect);
 }
 
+function applyTraitBias(
+  traits: CompanyState["traits"],
+  bias: Partial<Record<TraitKey, number>> | undefined,
+) {
+  if (!bias) return traits;
+  const next = { ...traits };
+  (Object.entries(bias) as Array<[TraitKey, number]>).forEach(([key, delta]) => {
+    next[key] = clamp(next[key] + delta, 1, 10);
+  });
+  return next;
+}
+
 export function initializeGame(
   philosophy: PhilosophyKey,
   seed = Math.floor(Date.now() % 4294967295),
@@ -94,7 +106,17 @@ export function initializeGame(
   const selected = philosophyMap[philosophy];
   let nextSeed = seed;
   const companyStates = companies.map<CompanyState>((company) => {
-    const traits = { ...company.traits };
+    const industry = industryMap[company.industry];
+    const region = regionMap[company.region];
+    const matchingOpportunities = opportunities.filter((opportunity) =>
+      opportunity.industry === company.industry || opportunity.region === company.region || (!opportunity.industry && !opportunity.region),
+    );
+    const opportunityPick = pick(matchingOpportunities.length ? matchingOpportunities : opportunities, nextSeed);
+    nextSeed = opportunityPick.seed;
+    let traits = { ...company.traits };
+    traits = applyTraitBias(traits, industry?.traitBias);
+    traits = applyTraitBias(traits, region?.traitBias);
+    traits = applyTraitBias(traits, opportunityPick.item.traitBias);
     (Object.keys(traits) as TraitKey[]).forEach((key) => {
       const roll = random(nextSeed);
       nextSeed = roll.seed;
@@ -112,6 +134,7 @@ export function initializeGame(
     }
     return {
       ...company,
+      opportunity: opportunityPick.item,
       traits,
       price: company.basePrice,
       previousPrice: company.basePrice,
@@ -123,7 +146,7 @@ export function initializeGame(
       convictionTurns: 0,
       protectedThisTurn: false,
       asymmetricBet: false,
-      lastChangeReason: "Awaiting the opening bell.",
+      lastChangeReason: `${industry?.label ?? "Unknown Theme"} · ${region?.label ?? "Unknown Region"}`,
     };
   });
   const initialDraft = generateDraftOffer(nextSeed, []);
@@ -576,6 +599,14 @@ function eventTargets(event: GameEvent, state: GameState, seed: number) {
   if (event.targets === "archetype") {
     return { ids: state.companies.filter((company) => company.archetype === event.archetype).map((company) => company.id), seed };
   }
+  if (event.targets === "industry") {
+    const ids = state.companies.filter((company) => company.industry === event.industry).map((company) => company.id);
+    if (ids.length) return { ids, seed };
+  }
+  if (event.targets === "region") {
+    const ids = state.companies.filter((company) => company.region === event.region).map((company) => company.id);
+    if (ids.length) return { ids, seed };
+  }
   const target = pick(state.companies, seed);
   return { ids: [target.item.id], seed: target.seed };
 }
@@ -598,14 +629,14 @@ function philosophyModifier(state: GameState, company: CompanyState, event: Game
     return { value: (t.builderDna + t.executionSkill) >= 15 ? 0.025 : 0, text: "Execution quality compounds through noise." };
   }
   if (state.philosophy === "momentum-speculator") {
-    const wave = event.id === "hype-wave" || event.id === "takeover-rumor";
+    const wave = event.id === "hype-bubble" || event.id === "titan-circles";
     return { value: wave ? 0.05 : company.momentum > 0.08 ? -0.025 : 0, text: wave ? "Momentum amplified the wave." : "Reversals punish late momentum." };
   }
   return { value: company.archetype === "cash-cow" ? 0.018 : 0, text: "Cash-flow assets dampen volatility and pay for patience." };
 }
 
 function lessonFor(state: GameState, worst: Mover, event: GameEvent) {
-  if (event.id === "cost-shock") return "Strong balance sheets absorb pain that weak stories cannot.";
+  if (event.id === "friction-tax") return "Strong balance sheets absorb pain that weak stories cannot.";
   if (state.behavior.hypeBuys > state.behavior.valueBuys + 1) return "You are leaning into charisma. Check whether the character can survive its own story.";
   if (state.lastAction?.type === "patience") return "Patience is useful when conviction rests on quality, not hope.";
   if (worst.changePercent < -18) return "Pain exposes sizing before it exposes intelligence.";
@@ -691,7 +722,7 @@ export function drawEvent(state: GameState): GameState {
   const survivalWisdom = after >= before ? 1 : worstSafeWisdom(updatedCompanies, targets.ids);
   const cardWisdom =
     (hasCard(state, "risk") && after < before ? 1 : 0) +
-    (hasCard(state, "story") && eventPick.item.id === "hype-wave" ? 2 : 0) +
+    (hasCard(state, "story") && eventPick.item.id === "hype-bubble" ? 2 : 0) +
     (hasCard(state, "macro") && eventPick.item.targets === "commodity" ? 2 : 0) +
     (hasCard(state, "empire") && state.portfolio.length >= 3 ? 1 : 0);
   const wisdomChange = actionWisdom + survivalWisdom + cardWisdom;

@@ -10,15 +10,9 @@ export type TraitKey =
   | "optionality"
   | "executionSkill";
 
-export type ArchetypeKey =
-  | "sleeping-giant"
-  | "cash-cow"
-  | "future-takeover"
-  | "lottery-ticket"
-  | "zombie-miner"
-  | "infrastructure-winner"
-  | "mine-builder-mafia"
-  | "hidden-royalty";
+export type ArchetypeKey = string;
+export type IndustryThemeKey = string;
+export type RegionKey = string;
 
 export type PhilosophyKey =
   | "deep-value"
@@ -75,6 +69,33 @@ export interface Archetype {
   color: string;
 }
 
+export interface IndustryTheme {
+  key: IndustryThemeKey;
+  label: string;
+  description: string;
+  volatilityBias: number;
+  traitBias: Partial<Record<TraitKey, number>>;
+}
+
+export interface Region {
+  key: RegionKey;
+  label: string;
+  description: string;
+  stability: number;
+  traitBias: Partial<Record<TraitKey, number>>;
+}
+
+export interface OpportunityCard {
+  id: string;
+  title: string;
+  industry?: IndustryThemeKey;
+  region?: RegionKey;
+  lore: string;
+  upside: string;
+  risk: string;
+  traitBias: Partial<Record<TraitKey, number>>;
+}
+
 export interface CompanyConfig {
   id: string;
   name: string;
@@ -84,6 +105,8 @@ export interface CompanyConfig {
   desire: string;
   flaw: string;
   archetype: ArchetypeKey;
+  industry: IndustryThemeKey;
+  region: RegionKey;
   commodity: string;
   basePrice: number;
   volatility: number;
@@ -92,6 +115,7 @@ export interface CompanyConfig {
 }
 
 export interface CompanyState extends CompanyConfig {
+  opportunity: OpportunityCard;
   price: number;
   previousPrice: number;
   revealedTraits: TraitKey[];
@@ -143,9 +167,11 @@ export interface GameEvent {
   kicker: string;
   description: string;
   tone: "positive" | "negative" | "mixed";
-  targets: "one" | "all" | "commodity" | "archetype";
+  targets: "one" | "all" | "commodity" | "archetype" | "industry" | "region";
   commodity?: string;
   archetype?: ArchetypeKey;
+  industry?: IndustryThemeKey;
+  region?: RegionKey;
   effects: EventEffect[];
   narrative: string;
 }

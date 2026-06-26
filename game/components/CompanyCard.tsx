@@ -1,4 +1,4 @@
-import { archetypeMap, traitMap } from "../config";
+import { archetypeMap, industryMap, regionMap, traitMap } from "../config";
 import { investorTakeaway, nextHiddenTrait, riskLevel } from "../engine";
 import type { CompanyState, PlayerActionType, TraitKey, TurnPhase } from "../types";
 import { MiniChart } from "./MiniChart";
@@ -35,6 +35,8 @@ export function CompanyCard({
   const hiddenTrait = nextHiddenTrait(company);
   const maxPosition = positionValue + availableCapital;
   const commitment = positionValue > 0 ? Math.round(positionValue) : 0;
+  const industry = industryMap[company.industry];
+  const region = regionMap[company.region];
 
   return (
     <article
@@ -44,7 +46,7 @@ export function CompanyCard({
     >
       <div className="card-rarity-line">
         <span>{archetype.label}</span>
-        <span>{company.role}</span>
+        <span>{industry?.label ?? company.industry} · {region?.label ?? company.region}</span>
       </div>
 
       <div className="company-topline">
@@ -79,6 +81,12 @@ export function CompanyCard({
         <p><span>Flaw</span>{company.flaw}</p>
       </div>
 
+      <div className="opportunity-read">
+        <span>RUN OPPORTUNITY</span>
+        <strong>{company.opportunity.title}</strong>
+        <p>{company.opportunity.lore}</p>
+      </div>
+
       <div className="trait-grid">
         {company.revealedTraits.slice(0, 5).map((key) => {
           const trait = traitMap[key];
@@ -93,8 +101,8 @@ export function CompanyCard({
         })}
         {hiddenCount > 0 && (
           <div className="trait unknown-trait">
-            <span>Hidden DNA</span>
-            <strong>? × {hiddenCount}</strong>
+            <span>Unrevealed</span>
+            <strong>{hiddenCount} traits</strong>
           </div>
         )}
       </div>
