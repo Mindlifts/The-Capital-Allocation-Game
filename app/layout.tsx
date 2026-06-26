@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./report-overrides.css";
+import "./route-map.css";
 
 export const metadata: Metadata = {
   title: "Capital Allocation Game",

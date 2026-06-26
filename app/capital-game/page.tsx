@@ -13,12 +13,14 @@ import {
   initializeGame,
   investorTakeaway,
   netWorth,
-  OPPORTUNITY_REASONS,
+  opportunityReasons,
+  philosophyUnlock,
   portfolioValue,
   positionValue,
   revealResult,
   reviseOpportunityAction,
   riskLevel,
+  chooseRoute,
 } from "@/game/engine";
 import type { CompanyState, GameState, OpportunityActionType, PhilosophyKey } from "@/game/types";
 import { EndScreen } from "@/game/components/EndScreen";
@@ -29,6 +31,7 @@ import { Onboarding } from "@/game/components/Onboarding";
 import { ResourceBar } from "@/game/components/ResourceBar";
 import { WarRoomAudio } from "@/game/components/WarRoomAudio";
 import { WarRoomTimelines } from "@/game/components/WarRoomTimelines";
+import { RouteMap } from "@/game/components/RouteMap";
 
 type Screen = "start" | "philosophy" | "game";
 
@@ -266,9 +269,11 @@ export default function CapitalGamePage() {
 
   if (!state) return null;
   if (state.phase === "ended") return <EndScreen state={state} onRestart={restart} />;
+  if (state.phase === "route") return <RouteMap state={state} onChoose={(routeId) => setState((current) => current ? chooseRoute(current, routeId) : current)} />;
 
   const company = currentOpportunity(state);
   const progression = inferPhilosophyProgression(state);
+  const unlock = philosophyUnlock(state);
   const totalValue = netWorth(state);
   const investedValue = portfolioValue(state);
   const owned = company ? positionValue(state, company.id) > 0 : false;
@@ -276,7 +281,7 @@ export default function CapitalGamePage() {
   const actionOptions: OpportunityActionType[] = owned
     ? ["hold", "invest", "research", "trim", "sell"]
     : ["invest", "ignore", "research", "watchlist"];
-  const activeReasons = state.pendingOpportunityAction ? OPPORTUNITY_REASONS[state.pendingOpportunityAction] : [];
+  const activeReasons = state.pendingOpportunityAction && company ? opportunityReasons(company, state.pendingOpportunityAction) : [];
   const turnMemos = state.decisionMemos.filter((memo) => memo.turn === state.turn);
   const requiredAction = state.phase === "reason"
     ? "Choose the sentence that explains this decision."
@@ -321,6 +326,7 @@ export default function CapitalGamePage() {
             <span className="eyebrow">PHILOSOPHY FORMING</span>
             <h3>{progression.primary.name}</h3>
             <p>{progression.evolution}</p>
+            <div className="philosophy-unlock"><span>LEVEL {unlock.level} POWER</span><b>{unlock.title}</b><small>{unlock.description}</small></div>
             <div className="identity-meter">
               {progression.identities.slice(0, 3).map((identity) => (
                 <div key={identity.key}>

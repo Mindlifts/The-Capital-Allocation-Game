@@ -211,6 +211,7 @@ export interface DopamineMoment {
 }
 
 export type TurnPhase =
+  | "route"
   | "draft"
   | "opportunity"
   | "reason"
@@ -221,6 +222,38 @@ export type TurnPhase =
   | "world"
   | "reflect"
   | "ended";
+
+export type RouteKind = "safe" | "research" | "crisis" | "rare" | "influence" | "unknown";
+
+export interface RouteScenario {
+  id: string;
+  title: string;
+  subtitle: string;
+  lore: string;
+  tradeoff: string;
+  kind: RouteKind;
+  icon: string;
+  eventTone?: GameEvent["tone"];
+  eventTarget?: GameEvent["targets"];
+  resourceDelta: Partial<Resources>;
+  wisdomDelta: number;
+  legacyDelta: number;
+}
+
+export interface RouteRecord {
+  turn: number;
+  routeId: string;
+  title: string;
+  consequence: string;
+}
+
+export interface PhilosophyUnlock {
+  identity: PhilosophyIdentityKey;
+  level: number;
+  title: string;
+  description: string;
+  nextAt: number | null;
+}
 
 export type PlayerActionType =
   | "investigate"
@@ -327,6 +360,9 @@ export interface GameState {
   logs: TurnLog[];
   moments: DopamineMoment[];
   currentEvent: ResolvedEvent | null;
+  routeChoices: RouteScenario[];
+  activeRoute: RouteScenario | null;
+  routeHistory: RouteRecord[];
   roundOpportunityIds: string[];
   opportunityIndex: number;
   pendingOpportunityAction: OpportunityActionType | null;

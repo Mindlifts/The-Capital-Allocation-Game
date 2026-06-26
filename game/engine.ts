@@ -1,4 +1,4 @@
-import { companies, events, industryMap, investorCards, opportunities, philosophyMap, regionMap, traitMap } from "./config";
+import { companies, events, industryMap, investorCards, opportunities, philosophyMap, regionMap, routeScenarios, traitMap } from "./config";
 import type {
   BehaviorStats,
   CompanyState,
@@ -13,10 +13,12 @@ import type {
   OpportunityActionType,
   PhilosophyIdentityKey,
   PhilosophyProgression,
+  PhilosophyUnlock,
   PhilosophyKey,
   PlayerAction,
   PlayerActionType,
   ResolvedEvent,
+  RouteScenario,
   TraitKey,
   TurnLog,
 } from "./types";
@@ -92,6 +94,17 @@ function generateRoundOpportunityIds(companyStates: CompanyState[], seed: number
     ids: shuffledCompanies.items.slice(0, Math.min(count, companyStates.length)).map((company) => company.id),
     seed: shuffledCompanies.seed,
   };
+}
+
+function generateRouteChoices(seed: number, count = 3) {
+  const routes = shuffled(routeScenarios, seed);
+  const choices: RouteScenario[] = [];
+  for (const route of routes.items) {
+    if (!choices.some((item) => item.kind === route.kind)) choices.push(route);
+    if (choices.length === count) break;
+  }
+  if (choices.length < count) choices.push(...routes.items.filter((route) => !choices.includes(route)).slice(0, count - choices.length));
+  return { choices, seed: routes.seed };
 }
 
 function hasCard(state: GameState, effect: InvestorCard["effect"]) {
@@ -195,6 +208,9 @@ export function initializeGame(
     }],
     moments: [moment("unlock", "Mental Model Draft", "Pick a card to start shaping your philosophy before the world tests it.", "neutral")],
     currentEvent: null,
+    routeChoices: [],
+    activeRoute: null,
+    routeHistory: [],
     roundOpportunityIds: firstRound.ids,
     opportunityIndex: 0,
     pendingOpportunityAction: null,
@@ -339,6 +355,61 @@ export function inferPhilosophyProgression(state: GameState): PhilosophyProgress
   return { primary, runnerUp, identities, strengths: strengths.slice(0, 3), weaknesses: weaknesses.slice(0, 3), evolution };
 }
 
+const unlockMeta: Record<PhilosophyIdentityKey, Array<{ title: string; description: string }>> = {
+  builder: [
+    { title: "Operator’s Eye", description: "Builder investments earn extra Wisdom when execution is strong." },
+    { title: "Execution Buffer", description: "High-execution companies absorb part of negative world shocks." },
+    { title: "Finish What Matters", description: "Holding proven builders compounds Conviction faster." },
+  ],
+  contrarian: [
+    { title: "Neglect Radar", description: "Low-hype opportunities produce richer contextual reasons." },
+    { title: "Price of Doubt", description: "Researching neglected companies costs half Attention." },
+    { title: "Lonely Courage", description: "Buying quality under low hype gains extra Wisdom and Legacy." },
+  ],
+  "empire-builder": [
+    { title: "Map Sense", description: "Diversified commitments produce extra Legacy." },
+    { title: "Influence Network", description: "Influence routes grant an additional Credibility." },
+    { title: "System Advantage", description: "Three or more positions soften broad world shocks." },
+  ],
+  "momentum-trader": [
+    { title: "Velocity Read", description: "Strong positive momentum earns extra Wisdom when you add." },
+    { title: "Ride the Wave", description: "Positive hype events receive a modest additional tailwind." },
+    { title: "Exit Instinct", description: "Disciplined trims after large gains earn extra Legacy." },
+  ],
+  "optionality-hunter": [
+    { title: "Convex Lens", description: "High-optionality investments can receive a larger initial commitment." },
+    { title: "Many Doors", description: "Unknown routes grant additional Optionality." },
+    { title: "Asymmetric Fate", description: "Rare positive events create extra Wisdom." },
+  ],
+  "macro-thinker": [
+    { title: "Cycle Map", description: "Route choices reveal the layer most likely to move next." },
+    { title: "Second Order", description: "Industry and regional events generate extra Wisdom." },
+    { title: "Regime Reader", description: "Macro-aligned exposure softens adverse systemic events." },
+  ],
+  compounder: [
+    { title: "Long Clock", description: "Holding earns more Wisdom when quality remains intact." },
+    { title: "Durability Premium", description: "Strong balance sheets absorb part of negative shocks." },
+    { title: "Quiet Machine", description: "Repeated holds create Legacy without needing a catalyst." },
+  ],
+};
+
+export function philosophyUnlock(state: GameState): PhilosophyUnlock {
+  const progression = inferPhilosophyProgression(state);
+  const score = progression.primary.score;
+  const level = score >= 30 ? 3 : score >= 16 ? 2 : score >= 6 ? 1 : 0;
+  const unlocked = unlockMeta[progression.primary.key][Math.max(0, level - 1)] ?? {
+    title: "Philosophy Unformed",
+    description: "Repeat coherent decisions to turn an instinct into a power.",
+  };
+  return {
+    identity: progression.primary.key,
+    level,
+    title: unlocked.title,
+    description: unlocked.description,
+    nextAt: level >= 3 ? null : [6, 16, 30][level],
+  };
+}
+
 export function nextHiddenTrait(company: CompanyState) {
   return company.hiddenTraitOrder.find(
     (key) => !company.revealedTraits.includes(key),
@@ -408,6 +479,58 @@ export const OPPORTUNITY_REASONS: Record<OpportunityActionType, string[]> = {
   ],
 };
 
+const contextualReasons: Record<OpportunityActionType, Array<(company: CompanyState) => string>> = {
+  invest: [
+    (c) => `Backing ${industryMap[c.industry]?.label.toLowerCase() ?? "this industry"} execution.`,
+    (c) => `The ${regionMap[c.region]?.label} risk is already priced in.`,
+    (c) => `${c.opportunity.title} can change the company’s destiny.`,
+    (c) => c.traits.balanceSheet >= 7 ? "The balance sheet can survive being early." : "Fragility is acceptable at this position size.",
+    (c) => c.traits.marketHype <= 4 ? "Neglect creates the entry." : "Narrative velocity is becoming a real force.",
+  ],
+  ignore: [
+    (c) => `${c.opportunity.title} does not repair the core flaw.`,
+    (c) => `${regionMap[c.region]?.label} adds a risk I cannot control.`,
+    (c) => c.traits.marketHype >= 7 ? "Expectations already assume the happy ending." : "Cheap is not the same as mispriced.",
+    (c) => c.traits.executionSkill <= 4 ? "The story outruns the ability to execute." : "Quality is real, but the tradeoff is weak.",
+  ],
+  research: [
+    (c) => `Need to test whether ${c.flaw.toLowerCase()} is survivable.`,
+    (c) => `Need evidence behind ${c.opportunity.title}.`,
+    (c) => `Need to separate ${industryMap[c.industry]?.label.toLowerCase() ?? "sector"} signal from noise.`,
+    (c) => `Need to understand the ${regionMap[c.region]?.label} dependency.`,
+  ],
+  watchlist: [
+    (c) => `Waiting for ${c.opportunity.title} to become evidence.`,
+    (c) => `The character is interesting; the timing is not.`,
+    (c) => `One more world response could clarify ${c.flaw.toLowerCase()}.`,
+    (c) => `Preserving resources until the ${industryMap[c.industry]?.label.toLowerCase() ?? "cycle"} setup improves.`,
+  ],
+  hold: [
+    (c) => `${c.opportunity.title} keeps the original thesis alive.`,
+    (c) => `The ${regionMap[c.region]?.label} volatility does not change the character.`,
+    (c) => c.traits.executionSkill >= 7 ? "Execution deserves another turn." : "The unresolved risk was already in the thesis.",
+    (c) => `I still believe the company can ${c.desire.toLowerCase()}.`,
+  ],
+  trim: [
+    (c) => `${c.opportunity.title} is now reflected in expectations.`,
+    (c) => `Reducing exposure to ${regionMap[c.region]?.label} without abandoning the thesis.`,
+    (c) => c.traits.marketHype >= 7 ? "The crowd is paying me for some conviction." : "Sizing, not quality, became the problem.",
+    (c) => `Keeping the character, lowering the consequence of ${c.flaw.toLowerCase()}.`,
+  ],
+  sell: [
+    (c) => `${c.flaw} became the thesis, not a footnote.`,
+    (c) => `${c.opportunity.title} failed to change the trajectory.`,
+    (c) => `The ${regionMap[c.region]?.label} risk now dominates the upside.`,
+    (c) => c.traits.executionSkill <= 4 ? "Execution invalidated the story." : "A better character now deserves the capital.",
+  ],
+};
+
+export function opportunityReasons(company: CompanyState, action: OpportunityActionType) {
+  const contextual = contextualReasons[action].map((makeReason) => makeReason(company));
+  const combined = [...contextual, ...OPPORTUNITY_REASONS[action]];
+  return [...new Set(combined)].slice(0, 6);
+}
+
 export function currentOpportunity(state: GameState) {
   const id = state.roundOpportunityIds[state.opportunityIndex];
   return state.companies.find((company) => company.id === id) ?? state.companies[0];
@@ -471,6 +594,7 @@ export function confirmOpportunityReason(state: GameState, reason: string): Game
   const company = currentOpportunity(state);
   if (!company) return state;
   const action = state.pendingOpportunityAction;
+  const unlock = philosophyUnlock(state);
   const snapshot = decisionSnapshot(state, company);
   const memo: InvestmentMemo = {
     id: `memo-${state.turn}-${state.opportunityIndex}-${company.id}-${Date.now()}`,
@@ -506,7 +630,8 @@ export function confirmOpportunityReason(state: GameState, reason: string): Game
 
   const currentValue = positionValue(next, company.id);
   if (action === "invest") {
-    const pledge = Math.min(next.resources.capital, currentValue > 0 ? 125 : 250);
+    const convexBonus = unlock.identity === "optionality-hunter" && unlock.level >= 1 && company.traits.optionality >= 8 ? 75 : 0;
+    const pledge = Math.min(next.resources.capital, (currentValue > 0 ? 125 : 250) + convexBonus);
     if (pledge > 0) next = setPositionValue({ ...next, phase: "commit" }, company.id, currentValue + pledge);
   }
   if (action === "trim") {
@@ -518,10 +643,11 @@ export function confirmOpportunityReason(state: GameState, reason: string): Game
   if (action === "research") {
     const freshCompany = next.companies.find((item) => item.id === company.id) ?? company;
     const trait = nextHiddenTrait(freshCompany);
-    if (trait && next.resources.attention >= 1) {
+    const researchCost = unlock.identity === "contrarian" && unlock.level >= 2 && company.traits.marketHype <= 4 ? 0.5 : 1;
+    if (trait && next.resources.attention >= researchCost) {
       next = {
         ...next,
-        resources: { ...next.resources, attention: next.resources.attention - 1 },
+        resources: { ...next.resources, attention: next.resources.attention - researchCost },
         companies: next.companies.map((item) => item.id === company.id
           ? { ...item, revealedTraits: [...item.revealedTraits, trait] }
           : item),
@@ -541,7 +667,7 @@ export function confirmOpportunityReason(state: GameState, reason: string): Game
       ...next,
       behavior: { ...next.behavior, holds: next.behavior.holds + 1 },
       companies: next.companies.map((item) => item.id === company.id ? { ...item, convictionTurns: item.convictionTurns + 1 } : item),
-      wisdomScore: next.wisdomScore + 1,
+      wisdomScore: next.wisdomScore + 1 + (unlock.identity === "compounder" && unlock.level >= 1 ? 1 : 0),
     };
   }
   if (action === "watchlist") {
@@ -923,7 +1049,15 @@ function lessonFor(state: GameState, worst: Mover, event: GameEvent) {
 
 export function drawEvent(state: GameState): GameState {
   if (state.phase !== "commit" || !state.actionUsed) return state;
-  let eventPick = pick(events, state.seed);
+  const unlock = philosophyUnlock(state);
+  const routeCandidates = state.activeRoute
+    ? events.filter((event) =>
+        (!state.activeRoute?.eventTone || event.tone === state.activeRoute.eventTone) &&
+        (!state.activeRoute?.eventTarget || event.targets === state.activeRoute.eventTarget),
+      )
+    : [];
+  const eventPool = routeCandidates.length >= 3 ? [...routeCandidates, ...routeCandidates, ...events] : events;
+  let eventPick = pick(eventPool, state.seed);
   const previousEventTitle = state.logs.find((log) => log.id.startsWith("event-"))?.title;
   if (previousEventTitle === eventPick.item.title) {
     eventPick = pick(events.filter((event) => event.id !== eventPick.item.id), eventPick.seed);
@@ -969,8 +1103,14 @@ export function drawEvent(state: GameState): GameState {
       hasCard(state, "compounder") && company.traits.balanceSheet >= 8 && cashFlowAdjusted < 0 ? cashFlowAdjusted * 0.75 :
       hasCard(state, "momentum") && company.traits.marketHype >= 8 && cashFlowAdjusted > 0 ? cashFlowAdjusted + 0.03 :
       cashFlowAdjusted;
+    const identityAdjusted =
+      unlock.identity === "builder" && unlock.level >= 2 && traits.executionSkill >= 7 && cardAdjusted < 0 ? cardAdjusted * 0.78 :
+      unlock.identity === "compounder" && unlock.level >= 2 && traits.balanceSheet >= 7 && cardAdjusted < 0 ? cardAdjusted * 0.8 :
+      unlock.identity === "empire-builder" && unlock.level >= 3 && state.portfolio.length >= 3 && eventPick.item.targets === "all" && cardAdjusted < 0 ? cardAdjusted * 0.82 :
+      unlock.identity === "momentum-trader" && unlock.level >= 2 && eventPick.item.tone === "positive" && traits.marketHype >= 7 ? cardAdjusted + 0.025 :
+      cardAdjusted;
     const totalMove = clamp(
-      cardAdjusted,
+      identityAdjusted,
       -0.44,
       0.48,
     );
@@ -1003,7 +1143,10 @@ export function drawEvent(state: GameState): GameState {
     (hasCard(state, "story") && eventPick.item.id === "hype-bubble" ? 2 : 0) +
     (hasCard(state, "macro") && eventPick.item.targets === "commodity" ? 2 : 0) +
     (hasCard(state, "empire") && state.portfolio.length >= 3 ? 1 : 0);
-  const wisdomChange = actionWisdom + survivalWisdom + cardWisdom;
+  const unlockWisdom =
+    unlock.identity === "macro-thinker" && unlock.level >= 2 && (eventPick.item.targets === "industry" || eventPick.item.targets === "region") ? 1 :
+    unlock.identity === "optionality-hunter" && unlock.level >= 3 && eventPick.item.tone === "positive" ? 1 : 0;
+  const wisdomChange = actionWisdom + survivalWisdom + cardWisdom + unlockWisdom;
   const movers = updatedCompanies.map<Mover>((company) => ({
     companyId: company.id,
     name: company.name,
@@ -1129,31 +1272,66 @@ export function continueTurn(state: GameState): GameState {
   if (state.phase !== "reflect") return state;
   if (state.turn >= state.maxTurns) return { ...state, phase: "ended" };
   const nextTurn = state.turn + 1;
-  const shouldDraft = draftTurns.has(nextTurn);
-  const draft = shouldDraft ? generateDraftOffer(state.seed, state.draftedCardIds) : { offer: [], seed: state.seed };
-  const round = generateRoundOpportunityIds(state.companies, draft.seed);
-  const moments = shouldDraft
-    ? [moment("unlock", "New Draft Unlocked", "Choose another mental model. Your philosophy can pivot or double down.", "neutral")]
-    : [moment("critical", "One More Turn", "A new world state is open. Observe what changed before acting.", "neutral")];
+  const routes = generateRouteChoices(state.seed);
   return {
     ...state,
-    phase: shouldDraft ? "draft" : "opportunity",
+    phase: "route",
     turn: nextTurn,
     currentEvent: null,
-    roundOpportunityIds: round.ids,
+    routeChoices: routes.choices,
+    activeRoute: null,
+    roundOpportunityIds: [],
     opportunityIndex: 0,
     pendingOpportunityAction: null,
     lastAction: null,
     actionUsed: false,
     allocationChanged: false,
-    draftOffer: draft.offer,
-    moments,
+    draftOffer: [],
+    moments: [moment("critical", "Choose the Next Pressure", "The path you enter will bias what the world can do next.", "neutral")],
     turnStartValue: netWorth(state),
     resources: {
       ...state.resources,
       attention: clamp(state.resources.attention + 0.5, 0, 10),
       patience: clamp(state.resources.patience + 0.25, 0, 10),
     },
+    seed: routes.seed,
+  };
+}
+
+export function chooseRoute(state: GameState, routeId: string): GameState {
+  if (state.phase !== "route") return state;
+  const route = state.routeChoices.find((item) => item.id === routeId);
+  if (!route) return state;
+  const unlock = philosophyUnlock(state);
+  const influenceBonus = unlock.identity === "empire-builder" && unlock.level >= 2 && route.kind === "influence" ? 1 : 0;
+  const optionalityBonus = unlock.identity === "optionality-hunter" && unlock.level >= 2 && route.kind === "unknown" ? 1 : 0;
+  const resources = { ...state.resources };
+  (Object.entries(route.resourceDelta) as Array<[keyof typeof resources, number]>).forEach(([key, delta]) => {
+    const ceiling = key === "capital" ? Number.POSITIVE_INFINITY : 10;
+    resources[key] = clamp(resources[key] + delta, 0, ceiling);
+  });
+  resources.credibility = clamp(resources.credibility + influenceBonus, 0, 10);
+  resources.optionality = clamp(resources.optionality + optionalityBonus, 0, 10);
+  const shouldDraft = draftTurns.has(state.turn);
+  const draft = shouldDraft ? generateDraftOffer(state.seed, state.draftedCardIds) : { offer: [], seed: state.seed };
+  const round = generateRoundOpportunityIds(state.companies, draft.seed);
+  const consequence = `${route.tradeoff} ${route.eventTarget ? `${route.eventTarget} events are now more likely.` : "The next world response remains partially hidden."}`;
+  return {
+    ...state,
+    phase: shouldDraft ? "draft" : "opportunity",
+    activeRoute: route,
+    routeChoices: [],
+    routeHistory: [...state.routeHistory, { turn: state.turn, routeId: route.id, title: route.title, consequence }],
+    resources,
+    wisdomScore: state.wisdomScore + route.wisdomDelta,
+    legacyScore: state.legacyScore + route.legacyDelta,
+    draftOffer: draft.offer,
+    roundOpportunityIds: round.ids,
+    moments: [
+      moment(route.kind === "rare" ? "rare-event" : "discovery", route.title, consequence, route.kind === "crisis" ? "negative" : "neutral"),
+      ...(shouldDraft ? [moment("unlock", "Mental Model Draft", "The route is chosen. Now choose the belief you carry into it.", "neutral")] : []),
+    ],
+    logs: [{ id: `route-${state.turn}-${route.id}`, turn: state.turn, title: `Entered ${route.title}`, body: consequence, tone: route.kind === "crisis" ? "negative" : "neutral" }, ...state.logs],
     seed: round.seed,
   };
 }
