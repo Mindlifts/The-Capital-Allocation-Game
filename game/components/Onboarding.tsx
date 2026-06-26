@@ -1,10 +1,10 @@
 import { useState } from "react";
 
 const lessons = [
-  { icon: "◇", title: "Everything is scarce", body: "Capital buys positions. Attention, credibility, patience, and optionality buy different kinds of edge." },
-  { icon: "?", title: "Company DNA is incomplete", body: "Visible traits shape your first read. Hidden traits reward research—or punish assumptions." },
-  { icon: "↯", title: "Events change the world", body: "Every turn ends with uncertainty. Position size and company quality decide what survives." },
-  { icon: "✦", title: "Build conviction", body: "Review, allocate, choose one action, resolve the event, and learn. The cycle lasts 10 turns." },
+  { icon: "◇", title: "Everything is scarce", body: "Capital matters, but so do Attention, Credibility, Patience, and Optionality. Each buys a different kind of decision power." },
+  { icon: "?", title: "Companies are characters", body: "Each one has visible instincts and hidden instincts. You are reading motives, flaws, and potential under fog." },
+  { icon: "↯", title: "The world responds", body: "Every turn ends with an event. The event tests what you believed, not just what you owned." },
+  { icon: "✦", title: "Build a philosophy", body: "Read, commit, use one power, face the response, and adapt. Ten turns decide what kind of thinker you became." },
 ];
 
 export function Onboarding({ onDone }: { onDone: () => void }) {
@@ -26,7 +26,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           className="primary-button"
           onClick={() => index === lessons.length - 1 ? onDone() : setIndex(index + 1)}
         >
-          {index === lessons.length - 1 ? "Enter the market" : "Next principle"} <span>→</span>
+          {index === lessons.length - 1 ? "Enter the room" : "Next principle"} <span>→</span>
         </button>
       </section>
     </div>

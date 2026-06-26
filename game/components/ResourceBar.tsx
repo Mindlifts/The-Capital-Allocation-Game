@@ -12,12 +12,6 @@ const resourceMeta: Array<{
   { key: "optionality", label: "Optionality", icon: "✦" },
 ];
 
-const money = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
-
 export function ResourceBar({ state }: { state: GameState }) {
   return (
     <div className="resource-bar">
@@ -29,7 +23,7 @@ export function ResourceBar({ state }: { state: GameState }) {
             <span>
               <small>{resource.label}</small>
               <strong>
-                {resource.key === "capital" ? money.format(value) : value.toFixed(value % 1 ? 1 : 0)}
+                {resource.key === "capital" ? Math.round(value).toLocaleString("en-US") : value.toFixed(value % 1 ? 1 : 0)}
               </strong>
             </span>
           </div>

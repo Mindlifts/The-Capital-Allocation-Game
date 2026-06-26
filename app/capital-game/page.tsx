@@ -25,11 +25,7 @@ import { TurnStepper } from "@/game/components/TurnStepper";
 type Screen = "start" | "philosophy" | "game";
 type MarketTab = "market" | "portfolio" | "intel";
 
-const money = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
+const capital = (value: number) => `${Math.round(value).toLocaleString("en-US")}`;
 
 export default function CapitalGamePage() {
   const [screen, setScreen] = useState<Screen>("start");
@@ -65,35 +61,35 @@ export default function CapitalGamePage() {
         <div className="star-field" />
         <nav className="game-nav">
           <span className="wordmark"><i>CA</i> CAPITAL ALLOCATION</span>
-          <span>FIELD TEST 02 · CONVICTION PROTOCOL</span>
+          <span>ROGUELIKE FIELD TEST · DOCTRINE PROTOCOL</span>
         </nav>
         <section className="start-content">
-          <span className="eyebrow">A 10-TURN GAME OF CONVICTION UNDER UNCERTAINTY</span>
-          <h1>Capital is only<br /><em>one</em> thing you spend.</h1>
+          <span className="eyebrow">A 10-TURN ROGUELIKE OF CONVICTION UNDER UNCERTAINTY</span>
+          <h1>Build a philosophy,<br />not a <em>portfolio</em>.</h1>
           <p>
-            Read incomplete companies. Build positions. Spend scarce resources
-            for an edge. Then find out whether your conviction was discipline—or narrative.
+            Companies are characters. Philosophies are powers. Events are the
+            world answering your beliefs. Capital matters—but wisdom is the run.
           </p>
           <button type="button" className="primary-button large" onClick={() => setScreen("philosophy")}>
-            Take your seat <span>→</span>
+            Enter the doctrine room <span>→</span>
           </button>
           <div className="start-stats">
-            <span><b>08</b> collectible companies</span>
-            <span><b>05</b> decisions per turn</span>
-            <span><b>10</b> turns to build a legacy</span>
+            <span><b>08</b> uncertain characters</span>
+            <span><b>05</b> steps per turn</span>
+            <span><b>10</b> turns to gain wisdom</span>
           </div>
         </section>
         <div className="start-card-stack" aria-hidden="true">
           <div className="ghost-card ghost-three" />
           <div className="ghost-card ghost-two" />
           <div className="preview-card">
-            <span className="preview-kicker">MARKET EVENT</span>
+          <span className="preview-kicker">WORLD RESPONSE</span>
             <b>?</b>
             <h3>The rock does not care about your thesis.</h3>
             <div className="preview-line" /><div className="preview-line short" />
           </div>
         </div>
-        <p className="disclaimer">FICTIONAL EDUCATIONAL GAME · NOT INVESTMENT ADVICE</p>
+        <p className="disclaimer">FICTIONAL STRATEGY GAME · NO REAL COMPANIES · NO INVESTMENT ADVICE</p>
       </main>
     );
   }
@@ -106,9 +102,9 @@ export default function CapitalGamePage() {
           <span>CAPITAL ALLOCATION // DOCTRINE ROOM</span>
         </nav>
         <section className="philosophy-content">
-          <span className="eyebrow">CHOOSE YOUR STARTING DOCTRINE</span>
-          <h1>What do you believe<br />before the market tests you?</h1>
-          <p className="section-lead">Your philosophy now changes event outcomes, not merely the score at the end.</p>
+          <span className="eyebrow">CHOOSE YOUR STARTING POWER</span>
+          <h1>What do you believe<br />before the world pushes back?</h1>
+          <p className="section-lead">Your doctrine changes outcomes, rewards certain behaviors, and creates a failure mode.</p>
           <div className="philosophy-grid">
             {philosophies.map((philosophy, index) => {
               const selected = philosophy.key === selectedPhilosophy;
@@ -154,11 +150,11 @@ export default function CapitalGamePage() {
     : state.companies;
   const latestEvent = state.logs.find((log) => log.id.startsWith("event-"));
   const phaseCopy = {
-    review: { title: "Review what changed", body: state.turn === 1 ? "Meet the market. Compare visible quality, risk, hype, and what remains hidden." : "Prices moved last turn. Decide whether the thesis changed—or only the quote.", button: "Start allocating" },
-    allocate: { title: "Build or rebalance positions", body: "Open a company card. Add, trim, exit, or leave the position untouched.", button: "Lock allocations" },
-    action: { title: "Choose one edge", body: state.actionUsed ? state.lastAction?.description ?? "Action selected." : "Spend one scarce resource—or hold—to shape the uncertainty ahead.", button: "Draw market event" },
-    event: { title: "Event resolving", body: "The world is moving. Your positions and action are being tested.", button: "Resolving…" },
-    result: { title: "Read the impact", body: "Separate price movement from thesis movement before continuing.", button: "Continue" },
+    review: { title: "Read the world", body: state.turn === 1 ? "Meet the cast. Compare visible instincts, risk, hype, and what remains hidden." : "The world changed last turn. Decide whether your thesis changed—or only your emotions.", button: "Commit capital" },
+    allocate: { title: "Commit or rebalance", body: "Open a character card. Pledge, trim, abandon, or leave the thesis untouched.", button: "Lock commitments" },
+    action: { title: "Use one doctrine power", body: state.actionUsed ? state.lastAction?.description ?? "Power selected." : "Spend one scarce resource—or hold—to shape the uncertainty ahead.", button: "Face world response" },
+    event: { title: "World responding", body: "The world is moving. Your commitments and doctrine are being tested.", button: "Resolving…" },
+    result: { title: "Gain wisdom", body: "Separate consequence from lesson before continuing.", button: "Continue" },
     ended: { title: "", body: "", button: "" },
   }[state.phase];
 
@@ -171,7 +167,7 @@ export default function CapitalGamePage() {
       <header className="market-header">
         <div className="brand-block">
           <span className="brand-mark">CA</span>
-          <span><b>CAPITAL</b><small>ALLOCATION ROOM</small></span>
+          <span><b>CAPITAL</b><small>DOCTRINE ROOM</small></span>
         </div>
         <ResourceBar state={state} />
         <div className="turn-block">
@@ -198,13 +194,14 @@ export default function CapitalGamePage() {
           <div className="market-toolbar">
             <div>
               <span className="eyebrow">NORTHSTAR FICTIONAL EXCHANGE</span>
-              <h1>{tab === "portfolio" ? "Your positions" : tab === "intel" ? "Decision ledger" : "The opportunity board"}</h1>
+              <h1>{tab === "portfolio" ? "Your commitments" : tab === "intel" ? "Wisdom ledger" : "The uncertain cast"}</h1>
             </div>
             <div className="portfolio-totals">
-              <span>Portfolio value <b>{money.format(totalValue)}</b></span>
-              <span>Capital deployed <b>{money.format(investedValue)}</b></span>
+              <span>Total capital <b>{capital(totalValue)}</b></span>
+              <span>Committed <b>{capital(investedValue)}</b></span>
+              <span>Wisdom <b>{state.wisdomScore}</b></span>
               <span>Turn change <b className={totalValue >= state.turnStartValue ? "gain" : "loss"}>
-                {totalValue >= state.turnStartValue ? "+" : ""}{money.format(totalValue - state.turnStartValue)}
+                {totalValue >= state.turnStartValue ? "+" : ""}{capital(totalValue - state.turnStartValue)}
               </b></span>
             </div>
           </div>
@@ -216,9 +213,9 @@ export default function CapitalGamePage() {
           )}
 
           <div className="market-tabs">
-            <button type="button" className={tab === "market" ? "active" : ""} onClick={() => setTab("market")}>Market <span>{state.companies.length}</span></button>
-            <button type="button" className={tab === "portfolio" ? "active" : ""} onClick={() => setTab("portfolio")}>Portfolio <span>{state.portfolio.length}</span></button>
-            <button type="button" className={tab === "intel" ? "active" : ""} onClick={() => setTab("intel")}>Decision log <span>{state.logs.length}</span></button>
+            <button type="button" className={tab === "market" ? "active" : ""} onClick={() => setTab("market")}>Cast <span>{state.companies.length}</span></button>
+            <button type="button" className={tab === "portfolio" ? "active" : ""} onClick={() => setTab("portfolio")}>Commitments <span>{state.portfolio.length}</span></button>
+            <button type="button" className={tab === "intel" ? "active" : ""} onClick={() => setTab("intel")}>Wisdom log <span>{state.logs.length}</span></button>
           </div>
 
           {tab === "intel" ? (
@@ -254,8 +251,8 @@ export default function CapitalGamePage() {
             </div>
           ) : (
             <div className="empty-portfolio">
-              <span>◇</span><h2>No capital deployed</h2><p>Optionality is useful. Permanent indecision is not.</p>
-              <button type="button" className="text-button" onClick={() => setTab("market")}>Browse companies →</button>
+              <span>◇</span><h2>No thesis committed</h2><p>Optionality is useful. Permanent indecision is not.</p>
+              <button type="button" className="text-button" onClick={() => setTab("market")}>Read the cast →</button>
             </div>
           )}
         </section>
@@ -271,7 +268,7 @@ export default function CapitalGamePage() {
             <div className="rail-section global-action">
               <span className="eyebrow">NO COMPANY REQUIRED</span>
               <button type="button" disabled={state.actionUsed} onClick={() => selectAction("hold")}>
-                <b>Hold through volatility</b>
+                <b>Hold through uncertainty</b>
                 <span>Spend nothing · build conviction</span>
               </button>
               {state.actionUsed && <p className="action-confirmed">✓ {state.lastAction?.title}</p>}
@@ -308,7 +305,7 @@ export default function CapitalGamePage() {
             </button>
             {state.phase === "action" && !state.actionUsed && <small>Choose an action before drawing the event.</small>}
           </div>
-          <p className="rail-note">FICTIONAL GAME MECHANICS · NO REAL MARKET DATA</p>
+        <p className="rail-note">FICTIONAL STRATEGY MECHANICS · NO REAL MARKET DATA</p>
         </aside>
       </div>
 

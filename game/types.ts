@@ -56,6 +56,9 @@ export interface CompanyConfig {
   name: string;
   ticker: string;
   tagline: string;
+  role: string;
+  desire: string;
+  flaw: string;
   archetype: ArchetypeKey;
   commodity: string;
   basePrice: number;
@@ -188,6 +191,7 @@ export interface GameState {
   decisions: PlayerAction[];
   runId: number;
   legacyScore: number;
+  wisdomScore: number;
   seed: number;
 }
 
@@ -206,6 +210,7 @@ export interface ResolvedEvent {
   portfolioBefore: number;
   portfolioAfter: number;
   portfolioChange: number;
+  wisdomChange: number;
   bestMover: Mover;
   worstMover: Mover;
   lessonHint: string;
@@ -216,6 +221,7 @@ export interface GameSummary {
   finalValue: number;
   returnPercent: number;
   legacyScore: number;
+  wisdomScore: number;
   bestInvestment: string;
   worstInvestment: string;
   bestDecision: string;

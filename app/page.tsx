@@ -7,11 +7,11 @@ export default function Home() {
         <span className="eyebrow">NORTHSTAR GAMES // FIELD TEST 01</span>
         <h1>Capital Allocation Game</h1>
         <p>
-          Build conviction. Survive uncertainty. Discover what kind of investor
+          Build a philosophy. Survive uncertainty. Discover what kind of thinker
           you become when every resource is scarce.
         </p>
         <Link href="/capital-game" className="primary-button">
-          Enter the allocation room <span>→</span>
+          Enter the doctrine room <span>→</span>
         </Link>
       </div>
     </main>
