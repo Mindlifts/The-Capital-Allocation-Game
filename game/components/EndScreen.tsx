@@ -103,6 +103,10 @@ export function EndScreen({ state, onRestart }: { state: GameState; onRestart: (
         <div className="decision-report">
           <div><span>BEST DECISION</span><strong>{summary.bestDecision}</strong></div>
           <div><span>WORST DECISION</span><strong>{summary.worstDecision}</strong></div>
+          <div><span>MOST COMMON REASON</span><strong>{summary.mostCommonReason}</strong></div>
+          <div><span>BEST MEMO</span><strong>{summary.bestMemo}</strong></div>
+          <div><span>HARDEST MEMO</span><strong>{summary.worstMemo}</strong></div>
+          <div><span>BIGGEST LESSON</span><strong>{summary.lesson}</strong></div>
         </div>
 
         <div className="philosophy-verdict">

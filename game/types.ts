@@ -212,6 +212,8 @@ export interface DopamineMoment {
 
 export type TurnPhase =
   | "draft"
+  | "opportunity"
+  | "reason"
   | "observe"
   | "think"
   | "choose"
@@ -233,6 +235,45 @@ export interface PlayerAction {
   title: string;
   description: string;
   turn: number;
+}
+
+export type OpportunityActionType =
+  | "invest"
+  | "ignore"
+  | "research"
+  | "watchlist"
+  | "hold"
+  | "trim"
+  | "sell";
+
+export interface CompanyDecisionSnapshot {
+  price: number;
+  archetype: ArchetypeKey;
+  industry: IndustryThemeKey;
+  region: RegionKey;
+  hype: number;
+  risk: string;
+  visibleTraits: Array<{ key: TraitKey; label: string; value: number }>;
+  hiddenTraitCount: number;
+  positionValue: number;
+  takeaway: string;
+}
+
+export interface InvestmentMemo {
+  id: string;
+  turn: number;
+  opportunityIndex: number;
+  companyId: string;
+  companyName: string;
+  action: OpportunityActionType;
+  reason: string;
+  snapshot: CompanyDecisionSnapshot;
+  result?: {
+    priceAfter: number;
+    valueAfter: number;
+    changePercent: number;
+    note: string;
+  };
 }
 
 export interface BehaviorStats {
@@ -286,6 +327,10 @@ export interface GameState {
   logs: TurnLog[];
   moments: DopamineMoment[];
   currentEvent: ResolvedEvent | null;
+  roundOpportunityIds: string[];
+  opportunityIndex: number;
+  pendingOpportunityAction: OpportunityActionType | null;
+  decisionMemos: InvestmentMemo[];
   lastAction: PlayerAction | null;
   actionUsed: boolean;
   allocationChanged: boolean;
@@ -334,4 +379,7 @@ export interface GameSummary {
   dominantBehavior: string;
   investorArchetype: string;
   lesson: string;
+  mostCommonReason: string;
+  bestMemo: string;
+  worstMemo: string;
 }
