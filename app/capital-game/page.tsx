@@ -88,7 +88,7 @@ export default function CapitalGamePage() {
           <div className="ghost-card ghost-two" />
           <div className="preview-card">
           <span className="preview-kicker">WORLD RESPONSE</span>
-            <b>?</b>
+            <b>◇</b>
             <h3>The rock does not care about your thesis.</h3>
             <div className="preview-line" /><div className="preview-line short" />
           </div>
@@ -193,11 +193,11 @@ export default function CapitalGamePage() {
     },
     commit: {
       title: "Commit",
-      body: "Now size the thesis. Pledge, trim, abandon, or leave commitments untouched.",
+      body: "Now size the thesis. You can pledge, trim, abandon, and revise until you press World reacts.",
       button: "World reacts",
       changed: state.actionUsed ? `Your edge: ${state.lastAction?.title}` : "No edge selected.",
       why: "Sizing turns a thought into consequence.",
-      options: "Open cards to pledge or trim capital. You may also keep commitments unchanged.",
+      options: "Open any card to pledge or trim capital. Changes remain editable until the next button is pressed.",
       tradeoff: "Bigger commitments create bigger lessons. Smaller commitments preserve optionality.",
     },
     world: {
@@ -390,7 +390,6 @@ export default function CapitalGamePage() {
               className="advance-button"
               disabled={state.phase === "choose" && !state.actionUsed}
               onClick={() => {
-                setSelectedCompany(null);
                 setState((current) => {
                   if (!current) return current;
                   if (current.phase === "observe") return beginAllocation(current);

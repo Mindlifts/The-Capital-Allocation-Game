@@ -709,6 +709,29 @@ body::before {
   letter-spacing: .12em;
   text-transform: uppercase;
 }
+.opportunity-read {
+  margin: 10px 16px 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(225,189,101,.12);
+  background: linear-gradient(90deg, rgba(225,189,101,.045), rgba(255,255,255,.015));
+}
+.opportunity-read span {
+  display: block;
+  color: var(--gold);
+  font: 7px var(--mono);
+  letter-spacing: .12em;
+}
+.opportunity-read strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+}
+.opportunity-read p {
+  color: #aeb8b5;
+  font-size: 10px;
+  line-height: 1.45;
+  margin: 5px 0 0;
+}
 .collectible-card .trait-grid { margin: 12px 16px 0; grid-template-columns: repeat(6, 1fr); }
 .takeaway { margin: 13px 16px 0; padding: 11px 12px; border-left: 2px solid var(--company-accent); background: rgba(255,255,255,.025); }
 .takeaway span { color: var(--company-accent); font: 7px var(--mono); letter-spacing: .1em; }
