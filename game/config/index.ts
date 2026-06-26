@@ -1,6 +1,7 @@
 export * from "./archetypes";
 export * from "./companies";
 export * from "./events";
+export * from "./eventKnowledge";
 export * from "./industries";
 export * from "./investorCards";
 export * from "./opportunities";

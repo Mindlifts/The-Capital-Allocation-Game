@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { eventKnowledge, industryMap, plainEffectLines, regionMap } from "../config";
 import type { GameState } from "../types";
 import { MomentStack } from "./MomentStack";
 
@@ -22,10 +23,15 @@ export function EventOverlay({
   const affected = state.companies.filter((company) => resolved.targetIds.includes(company.id));
   const turnMemos = state.decisionMemos.filter((memo) => memo.turn === state.turn);
   const affectedNames = affected.map((company) => company.name).join(", ") || "The whole field";
-  const eventDirection =
-    event.tone === "positive" ? "This creates a tailwind." :
-    event.tone === "negative" ? "This creates pressure." :
-    "This changes the tradeoff.";
+  const knowledge = eventKnowledge(event);
+  const effectLines = plainEffectLines(event);
+  const targetReason =
+    event.targets === "industry" ? `They operate in ${industryMap[event.industry ?? ""]?.label ?? "the affected industry"}.` :
+    event.targets === "region" ? `They operate in ${regionMap[event.region ?? ""]?.label ?? "the affected region"}.` :
+    event.targets === "archetype" ? "They share the company type targeted by this event." :
+    event.targets === "commodity" ? `They depend directly on ${event.commodity ?? "the affected market"}.` :
+    event.targets === "all" ? "This is a broad world event, so every company must adapt." :
+    "This company was directly exposed to the event.";
   const resultHeadline = resolved.portfolioChange >= 0
     ? "Your decisions survived this round."
     : "The world pushed back on your decisions.";
@@ -49,25 +55,30 @@ export function EventOverlay({
           </div>
           <p className="event-label">WORLD RESPONSE // TURN {state.turn}</p>
           <h2>{event.title}</h2>
-          <p className="event-description">{event.description}</p>
+          <p className="event-description">{knowledge.summary}</p>
 
           <div className="event-explainer-grid">
             <div>
-              <span>WHAT HAPPENED</span>
-              <p>{event.kicker}. {eventDirection}</p>
+              <span>WHAT ACTUALLY HAPPENED</span>
+              <p>{knowledge.cause}</p>
             </div>
             <div>
-              <span>WHO IS HIT</span>
-              <p>{affectedNames}</p>
+              <span>WHO CHANGED — AND WHY</span>
+              <p><b>{affectedNames}</b><small>{targetReason}</small></p>
             </div>
             <div>
-              <span>WHY IT MATTERS</span>
-              <p>{resolved.lessonHint}</p>
+              <span>WHAT THIS CHANGES</span>
+              <p>{knowledge.consequence}</p>
             </div>
-            <div>
-              <span>MECHANICAL EFFECT</span>
-              <p>{resolved.mechanicalEffect || "Broad world pressure"}</p>
+            <div className="plain-effects">
+              <span>GAME EFFECT, IN PLAIN LANGUAGE</span>
+              <ul>{effectLines.map((line) => <li key={line}>{line}</li>)}</ul>
             </div>
+          </div>
+
+          <div className="event-decision-prompt">
+            <span>THE QUESTION THIS CREATES</span>
+            <strong>{knowledge.decisionPrompt}</strong>
           </div>
 
           <div className="affected-companies">
@@ -100,12 +111,13 @@ export function EventOverlay({
               </div>
             </div>
             <div className="result-lines">
-              <p><span>WHAT CHANGED</span>{event.title} affected {affectedNames}. Portfolio impact was {resolved.portfolioChange >= 0 ? "+" : ""}{capital(resolved.portfolioChange)}.</p>
-              <p><span>WHY</span>{resolved.mechanicalEffect || "The event created broad pressure across the world."}</p>
+              <p><span>WHAT CHANGED</span>{knowledge.summary} {affectedNames} moved your total capital by {resolved.portfolioChange >= 0 ? "+" : ""}{capital(resolved.portfolioChange)}.</p>
+              <p><span>WHY IT HAPPENED</span>{knowledge.cause}</p>
+              <p><span>WHAT IT MEANS</span>{knowledge.consequence}</p>
+              <p><span>YOUR NEXT QUESTION</span>{knowledge.decisionPrompt}</p>
               <p><span>YOUR EDGE</span>{state.lastAction?.description}</p>
               <p><span>PHILOSOPHY</span>{resolved.philosophyEffect}</p>
               <p><span>WISDOM</span>{resolved.wisdomChange >= 0 ? "+" : ""}{resolved.wisdomChange} wisdom this turn · current wisdom {state.wisdomScore}</p>
-              <p><span>LESSON</span>{resolved.lessonHint}</p>
             </div>
             {turnMemos.length > 0 && (
               <div className="memo-feedback">
