@@ -176,6 +176,13 @@ export interface GameEvent {
   narrative: string;
 }
 
+export interface EventKnowledge {
+  summary: string;
+  cause: string;
+  consequence: string;
+  decisionPrompt: string;
+}
+
 export interface PortfolioPosition {
   companyId: string;
   shares: number;

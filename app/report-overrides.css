@@ -49,6 +49,24 @@
   box-shadow: 0 10px 40px rgba(225,189,101,.12);
 }
 
+.event-explainer-grid p b,
+.event-explainer-grid p small { display: block; }
+.event-explainer-grid p b { color: #f1ead8; margin-bottom: 6px; }
+.event-explainer-grid p small { color: #929d99; font-size: 12px; line-height: 1.5; }
+.plain-effects ul { margin: 0; padding: 0; list-style: none; }
+.plain-effects li { position: relative; padding-left: 16px; color: #d6ddda; font-size: 14px; line-height: 1.5; }
+.plain-effects li + li { margin-top: 7px; }
+.plain-effects li::before { content: "→"; position: absolute; left: 0; color: var(--gold); }
+.event-decision-prompt {
+  margin: 12px 0 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(244,214,133,.38);
+  background: linear-gradient(90deg, rgba(225,189,101,.12), rgba(225,189,101,.035));
+  text-align: left;
+}
+.event-decision-prompt span { display: block; color: var(--gold); font: 9px var(--mono); letter-spacing: .15em; margin-bottom: 7px; }
+.event-decision-prompt strong { color: #fff3d2; font: 600 17px/1.5 "Playfair Display", serif; }
+
 @media (max-width: 760px) {
   .result-lines,
   .result-card .moment-stack { grid-template-columns: 1fr; }
