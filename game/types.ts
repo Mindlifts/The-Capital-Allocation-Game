@@ -191,6 +191,25 @@ export interface TurnLog {
   tone: "positive" | "negative" | "neutral";
 }
 
+export type DopamineMomentKind =
+  | "combo"
+  | "legendary"
+  | "near-miss"
+  | "critical"
+  | "rare-event"
+  | "opportunity"
+  | "risk-reward"
+  | "discovery"
+  | "perfect-timing"
+  | "unlock";
+
+export interface DopamineMoment {
+  kind: DopamineMomentKind;
+  title: string;
+  body: string;
+  tone: "positive" | "negative" | "neutral";
+}
+
 export type TurnPhase =
   | "draft"
   | "observe"
@@ -265,6 +284,7 @@ export interface GameState {
   portfolio: PortfolioPosition[];
   records: InvestmentRecord[];
   logs: TurnLog[];
+  moments: DopamineMoment[];
   currentEvent: ResolvedEvent | null;
   lastAction: PlayerAction | null;
   actionUsed: boolean;
@@ -294,6 +314,7 @@ export interface ResolvedEvent {
   portfolioAfter: number;
   portfolioChange: number;
   wisdomChange: number;
+  moments: DopamineMoment[];
   bestMover: Mover;
   worstMover: Mover;
   lessonHint: string;

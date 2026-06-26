@@ -1,4 +1,5 @@
 import type { GameState } from "../types";
+import { MomentStack } from "./MomentStack";
 
 const capital = (value: number) => `${Math.round(value).toLocaleString("en-US")} capital`;
 
@@ -69,6 +70,7 @@ export function EventOverlay({
             <p><span>WISDOM</span>{resolved.wisdomChange >= 0 ? "+" : ""}{resolved.wisdomChange} wisdom this turn · current wisdom {state.wisdomScore}</p>
             <p><span>LESSON HINT</span>{resolved.lessonHint}</p>
           </div>
+          <MomentStack moments={resolved.moments} />
           <div className="remaining-resources">
             <span>◎ {state.resources.attention.toFixed(1)}</span>
             <span>◆ {state.resources.credibility.toFixed(1)}</span>

@@ -2,6 +2,7 @@ import { companies, events, industryMap, investorCards, opportunities, philosoph
 import type {
   BehaviorStats,
   CompanyState,
+  DopamineMoment,
   GameEvent,
   GameState,
   GameSummary,
@@ -85,6 +86,10 @@ function generateDraftOffer(seed: number, draftedIds: string[], count = 3) {
 
 function hasCard(state: GameState, effect: InvestorCard["effect"]) {
   return state.investorDeck.some((card) => card.effect === effect);
+}
+
+function moment(kind: DopamineMoment["kind"], title: string, body: string, tone: DopamineMoment["tone"] = "positive"): DopamineMoment {
+  return { kind, title, body, tone };
 }
 
 function applyTraitBias(
@@ -176,6 +181,7 @@ export function initializeGame(
       body: `${capital(selected.resources.capital)} is ready. Draft your first mental model, then observe the cast and let your philosophy take shape.`,
       tone: "neutral",
     }],
+    moments: [moment("unlock", "Mental Model Draft", "Pick a card to start shaping your philosophy before the world tests it.", "neutral")],
     currentEvent: null,
     lastAction: null,
     actionUsed: false,
@@ -363,6 +369,18 @@ export function draftInvestorCard(state: GameState, cardId: string): GameState {
     wisdomGain += 2;
     legacyGain += 1;
   }
+  const moments: DopamineMoment[] = [];
+  if (card.rarity === "Legendary") {
+    moments.push(moment("legendary", "Legendary Mental Model", `${card.title} can reshape the entire run. Big upside, real drawback.`, "positive"));
+  } else if (card.rarity === "Epic" || card.rarity === "Rare") {
+    moments.push(moment("rare-event", `${card.rarity} Card Drafted`, `${card.title} opens a less common path.`, "positive"));
+  }
+  if (state.investorDeck.some((item) => item.effect === card.effect)) {
+    moments.push(moment("combo", "Deck Synergy", `${card.title} stacks with your existing ${card.effect} mental model.`, "positive"));
+  }
+  if (state.investorDeck.length + 1 === 3 || state.investorDeck.length + 1 === 5) {
+    moments.push(moment("unlock", "Philosophy Layer Unlocked", `Your deck now has ${state.investorDeck.length + 1} active mental models.`, "neutral"));
+  }
   return {
     ...state,
     phase: "observe",
@@ -372,6 +390,7 @@ export function draftInvestorCard(state: GameState, cardId: string): GameState {
     resources,
     wisdomScore: state.wisdomScore + wisdomGain,
     legacyScore: state.legacyScore + legacyGain,
+    moments: moments.length ? moments : [moment("discovery", "New Mental Model", `${card.title} is now part of your philosophy.`, "neutral")],
     logs: [{
       id: `draft-${state.turn}-${card.id}`,
       turn: state.turn,
@@ -449,6 +468,19 @@ export function setPositionValue(
     costBasis: difference > 0 ? record.costBasis + difference : record.costBasis,
     realizedValue: difference < 0 ? record.realizedValue + Math.abs(difference) : record.realizedValue,
   } : record);
+  const moments: DopamineMoment[] = [];
+  if (difference > 0 && Math.abs(difference) >= 250) {
+    moments.push(moment("critical", "Critical Commitment", `${company.name} is now a meaningful part of the run. The next world response matters.`, "neutral"));
+  }
+  if (difference > 0 && wisdomDelta >= 3) {
+    moments.push(moment("combo", "Smart Fit", `Your card deck, thesis, and company DNA lined up on ${company.name}.`, "positive"));
+  }
+  if (difference > 0 && company.traits.optionality >= 9 && company.traits.balanceSheet <= 4) {
+    moments.push(moment("risk-reward", "High Convexity, Thin Ice", `${company.name} has huge upside shape and fragile survival.`, "neutral"));
+  }
+  if (difference < 0 && !soldAfterDrop) {
+    moments.push(moment("perfect-timing", "Disciplined Trim", `You reduced exposure before fear forced the decision.`, "positive"));
+  }
 
   return {
     ...state,
@@ -457,6 +489,7 @@ export function setPositionValue(
     behavior,
     allocationChanged: true,
     wisdomScore: Math.max(0, state.wisdomScore + wisdomDelta),
+    moments: moments.length ? moments : state.moments,
     resources: { ...state.resources, capital: state.resources.capital - difference },
     logs: [{
       id: `allocation-${state.turn}-${companyId}-${Date.now()}`,
@@ -509,12 +542,24 @@ export function performAction(
       title: `Investigated ${company.name}`,
       description: `${traitMap[trait].label} revealed at ${company.traits[trait]}/10 for ${attentionCost} Attention. Curiosity sharpened the thesis.`,
     };
+    const moments = [
+      moment(
+        company.traits[trait] >= 9 ? "legendary" : "discovery",
+        company.traits[trait] >= 9 ? "Legendary Discovery" : "Small Discovery",
+        `${company.name} revealed ${traitMap[trait].label} at ${company.traits[trait]}/10.`,
+        "positive",
+      ),
+    ];
+    if (hasCard(state, "discovery")) {
+      moments.push(moment("combo", "Discovery Engine", "Your Discovery card made investigation cheaper and more rewarding.", "positive"));
+    }
     return useAction(state, action, {
       resources: { ...state.resources, attention: state.resources.attention - attentionCost },
       companies: state.companies.map((item) => item.id === companyId
         ? { ...item, revealedTraits: [...item.revealedTraits, trait] }
         : item),
       wisdomScore: state.wisdomScore + 3 + (hasCard(state, "discovery") ? 1 : 0),
+      moments,
     }, "investigations");
   }
 
@@ -538,6 +583,7 @@ export function performAction(
       },
       legacyScore: state.legacyScore + 3,
       wisdomScore: state.wisdomScore + 1 + (hasCard(state, "empire") ? 1 : 0),
+      moments: [moment(hasCard(state, "empire") ? "combo" : "opportunity", "Backchannel Opened", `${company.name} gave you better access before the world reacted.`, "positive")],
     }, "credibilityPlays");
   }
 
@@ -553,6 +599,7 @@ export function performAction(
         ? { ...item, protectedThisTurn: true, convictionTurns: item.convictionTurns + 1 }
         : item),
       wisdomScore: state.wisdomScore + (positionValue(state, company.id) > 0 ? 2 : 0) + (hasCard(state, "compounder") ? 1 : 0),
+      moments: [moment("perfect-timing", "Conviction Shield Armed", `${company.name} can absorb the first wave of downside this turn.`, "neutral")],
     }, "patiencePlays");
   }
 
@@ -570,6 +617,7 @@ export function performAction(
         ? { ...item, asymmetricBet: true }
         : item),
       wisdomScore: state.wisdomScore + 1 + (hasCard(state, "optionality") ? 1 : 0),
+      moments: [moment("risk-reward", "Asymmetric Bet Armed", `${company.name} can now swing harder both ways.`, "neutral")],
     }, "optionalityBets");
   }
 
@@ -585,6 +633,7 @@ export function performAction(
         : item),
       legacyScore: state.legacyScore + state.portfolio.length,
       wisdomScore: state.wisdomScore + Math.min(3, state.portfolio.length) + (hasCard(state, "compounder") ? 1 : 0),
+      moments: [moment(hasCard(state, "compounder") ? "combo" : "perfect-timing", "Hold Chosen", "You chose patience over activity. Now the world tests whether that was discipline or drift.", "neutral")],
     }, "holds");
   }
 
@@ -742,6 +791,36 @@ export function drawEvent(state: GameState): GameState {
     if (effect.trait && effect.traitDelta) parts.push(`${traitMap[effect.trait].label} ${effect.traitDelta > 0 ? "+" : ""}${effect.traitDelta}`);
     return parts.join(", ");
   }).join(" · ");
+  const moments: DopamineMoment[] = [];
+  const rareWorldResponse = eventPick.item.targets === "region" || eventPick.item.targets === "industry";
+  if (rareWorldResponse) {
+    moments.push(moment("rare-event", "Rare World Response", `${eventPick.item.title} hit the ${eventPick.item.targets} layer, not just one company.`, eventPick.item.tone === "negative" ? "negative" : "positive"));
+  }
+  if (cardWisdom >= 2) {
+    moments.push(moment("combo", "Card Combo Triggered", `Your Investor Cards added +${cardWisdom} Wisdom to this reaction.`, "positive"));
+  }
+  if (state.lastAction?.type === "patience" && after >= before * 0.96) {
+    moments.push(moment("perfect-timing", "Perfect Timing", "Patience absorbed the hit before it became panic.", "positive"));
+  }
+  if (state.lastAction?.type === "optionality" && after > before) {
+    moments.push(moment("risk-reward", "Convexity Paid", "The asymmetric bet found the right side of volatility.", "positive"));
+  }
+  if (state.lastAction?.type === "optionality" && after < before) {
+    moments.push(moment("risk-reward", "Convexity Cut Both Ways", "The asymmetric bet amplified the wrong side of uncertainty.", "negative"));
+  }
+  if (after < before && after >= before * 0.98) {
+    moments.push(moment("near-miss", "Near Miss", "The thesis bent but did not break. One different sizing choice could have flipped the turn.", "neutral"));
+  }
+  if (bestMover.changePercent >= 28) {
+    moments.push(moment("legendary", "Legendary Breakout", `${bestMover.name} surged ${bestMover.changePercent.toFixed(1)}%.`, "positive"));
+  }
+  if (wisdomChange >= 4) {
+    moments.push(moment("critical", "Intelligent Decision Rewarded", `This turn generated +${wisdomChange} Wisdom because timing, sizing, and philosophy lined up.`, "positive"));
+  }
+  const affectedOpportunity = updatedCompanies.find((company) => targets.ids.includes(company.id));
+  if (affectedOpportunity && eventPick.item.tone === "positive" && affectedOpportunity.opportunity) {
+    moments.push(moment("opportunity", "Unexpected Opportunity", `${affectedOpportunity.opportunity.title} made ${affectedOpportunity.name} more interesting this run.`, "positive"));
+  }
   const resolvedEvent: ResolvedEvent = {
     event: eventPick.item,
     targetIds: targets.ids,
@@ -751,6 +830,7 @@ export function drawEvent(state: GameState): GameState {
     portfolioAfter: after,
     portfolioChange: after - before,
     wisdomChange,
+    moments,
     bestMover,
     worstMover,
     lessonHint: lessonFor(state, worstMover, eventPick.item),
@@ -777,6 +857,7 @@ export function drawEvent(state: GameState): GameState {
     logs: [log, ...state.logs],
     legacyScore: state.legacyScore + legacyGain,
     wisdomScore: Math.max(0, wisdomBefore + wisdomChange),
+    moments,
     seed,
   };
 }
@@ -798,6 +879,9 @@ export function continueTurn(state: GameState): GameState {
   const nextTurn = state.turn + 1;
   const shouldDraft = draftTurns.has(nextTurn);
   const draft = shouldDraft ? generateDraftOffer(state.seed, state.draftedCardIds) : { offer: [], seed: state.seed };
+  const moments = shouldDraft
+    ? [moment("unlock", "New Draft Unlocked", "Choose another mental model. Your philosophy can pivot or double down.", "neutral")]
+    : [moment("critical", "One More Turn", "A new world state is open. Observe what changed before acting.", "neutral")];
   return {
     ...state,
     phase: shouldDraft ? "draft" : "observe",
@@ -807,6 +891,7 @@ export function continueTurn(state: GameState): GameState {
     actionUsed: false,
     allocationChanged: false,
     draftOffer: draft.offer,
+    moments,
     turnStartValue: netWorth(state),
     resources: {
       ...state.resources,
