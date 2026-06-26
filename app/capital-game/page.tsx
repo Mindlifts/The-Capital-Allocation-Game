@@ -72,6 +72,45 @@ function hiddenLabels(company: CompanyState) {
     .map((trait) => traitMap[trait].label);
 }
 
+const traitStories: Record<string, { high: [string, string]; low: [string, string] }> = {
+  builderDna: { high: ["Builds when others present", "This team has turned difficult plans into real assets before."], low: ["Promise exceeds craft", "The ambition is clearer than the ability to build it." ] },
+  geologicalLuck: { high: ["The ground keeps answering", "Early evidence suggests the underlying asset may be unusually strong."], low: ["Reality has been stubborn", "The core asset has not yet rewarded the confidence placed in it."] },
+  balanceSheet: { high: ["Can survive a long winter", "It has enough financial room to endure delays without begging the market."], low: ["The clock is audible", "Another setback could force painful financing or a smaller future."] },
+  managementQuality: { high: ["Calm hands at the table", "Leadership has earned trust through choices, not presentation."], low: ["The storyteller leads", "Leadership confidence runs ahead of the evidence."] },
+  infrastructure: { high: ["The road already exists", "Access, logistics, and operating foundations make the plan more believable."], low: ["Stranded by the map", "The asset may be real, but reaching it remains part of the gamble."] },
+  politicalRisk: { high: ["The map can say no", "Its future depends on institutions and agreements the company cannot command."], low: ["Rules are mostly known", "The company can focus more on execution than political survival."] },
+  marketHype: { high: ["Everyone has heard the story", "Excitement creates momentum—and leaves little room for disappointment."], low: ["The room looks elsewhere", "Neglect may be an opportunity, or a warning that nobody cares yet."] },
+  commodityExposure: { high: ["The cycle speaks loudly", "A change in industry demand can transform this company quickly."], low: ["Makes its own weather", "Its fate depends more on execution than on a broad market tide."] },
+  optionality: { high: ["More than one future", "A single discovery, contract, or partner could rewrite the whole story."], low: ["One narrow road", "The company has little room to reinvent itself if the main plan fails."] },
+  executionSkill: { high: ["Finishes difficult work", "The team has shown it can deliver when timelines become uncomfortable."], low: ["The final mile is unproven", "Good ideas keep arriving at the point where execution must begin."] },
+};
+
+function characterSignals(company: CompanyState) {
+  return company.revealedTraits.slice(0, 3).map((key) => {
+    const story = traitStories[key];
+    const positive = key === "politicalRisk" ? company.traits[key] <= 5 : company.traits[key] >= 6;
+    const [title, body] = story[positive ? "high" : "low"];
+    return { key, label: traitMap[key].shortLabel, title, body };
+  });
+}
+
+function unresolvedQuestion(company: CompanyState) {
+  const hidden = company.hiddenTraitOrder.find((trait) => !company.revealedTraits.includes(trait));
+  const questions: Record<string, string> = {
+    managementQuality: "When pressure arrives, will leadership protect the mission—or protect its own story?",
+    balanceSheet: "How many setbacks can the treasury survive before belief becomes dilution?",
+    executionSkill: "Can this team finish the difficult work, or only explain why it is late?",
+    geologicalLuck: "Is the promise beneath the ground real, or only beautifully interpreted?",
+    politicalRisk: "Who outside the company can still stop this future from happening?",
+    infrastructure: "What must exist before this ambition can become practical?",
+    marketHype: "Are expectations creating opportunity—or consuming it in advance?",
+    optionality: "Is there truly another path if the main thesis fails?",
+    builderDna: "Does this organization create, or merely announce?",
+    commodityExposure: "Is this a great company, or simply a passenger in a favorable cycle?",
+  };
+  return hidden ? questions[hidden] : "The major unknowns are gone. The remaining uncertainty is whether you can act on what you know.";
+}
+
 function OpportunityCard({
   company,
   state,
@@ -82,6 +121,11 @@ function OpportunityCard({
   const position = positionValue(state, company.id);
   const change = company.recentChange * 100;
   const hidden = hiddenLabels(company);
+  const signals = characterSignals(company);
+  const lastMemo = [...state.decisionMemos].reverse().find((memo) => memo.companyId === company.id);
+  const memory = lastMemo
+    ? `You chose to ${lastMemo.action} because “${lastMemo.reason}”${lastMemo.result ? ` The world answered ${lastMemo.result.changePercent >= 0 ? "in your favor" : "against you"}.` : "."}`
+    : `${company.name} has no history with you yet. This first judgment will become part of its story.`;
   const themeGlyph = industryGlyph[company.industry] ?? "◇";
   const risk = riskLevel(company);
   return (
@@ -127,7 +171,19 @@ function OpportunityCard({
         This run adds: <strong>{company.opportunity.title}</strong> — {company.opportunity.lore}
       </p>
 
-      <p className="choice-oath">You are not clicking a button. You are choosing what kind of thinker gets to survive this world.</p>
+      <p className="choice-oath">{company.desire} The question is what you are willing to risk on that belief.</p>
+
+      <div className="character-signals">
+        {signals.map((signal) => <div className="character-signal" key={signal.key}><span>{signal.label}</span><strong>{signal.title}</strong><p>{signal.body}</p></div>)}
+      </div>
+
+      <div className="unresolved-thread"><span>?</span><div><small>THE QUESTION STILL HAUNTING THIS COMPANY</small><strong>{unresolvedQuestion(company)}</strong></div></div>
+
+      <div className="relationship-memory">
+        <div><span>Your stake</span><strong>{position > 0 ? capital(position) : "You have not backed them."}</strong></div>
+        <div><span>What this company remembers</span><strong>{memory}</strong></div>
+        <div><span>Latest chapter</span><strong>{company.lastChangeReason} · {change >= 0 ? "Hope is rising." : "Pressure is building."}</strong></div>
+      </div>
 
       <div className="signal-strip">
         {visibleSignals(company).map((signal) => (
