@@ -8,6 +8,7 @@ import {
   continueTurn,
   drawEvent,
   finishAllocation,
+  inferPhilosophyProgression,
   initializeGame,
   netWorth,
   performAction,
@@ -150,6 +151,7 @@ export default function CapitalGamePage() {
     ? state.companies.filter((company) => positionIds.has(company.id))
     : state.companies;
   const latestEvent = state.logs.find((log) => log.id.startsWith("event-"));
+  const progression = inferPhilosophyProgression(state);
   const phaseCopy = {
     observe: {
       title: "Observe",
@@ -333,7 +335,22 @@ export default function CapitalGamePage() {
           )}
 
           <div className="rail-section mandate">
-            <span className="eyebrow">PHILOSOPHY EDGE</span>
+            <span className="eyebrow">PHILOSOPHY FORMING</span>
+            <h2>{progression.primary.name}</h2>
+            <p>{progression.evolution}</p>
+            <div className="identity-meter">
+              {progression.identities.slice(0, 3).map((identity) => (
+                <div key={identity.key}>
+                  <span>{identity.name}</span>
+                  <i><b style={{ width: `${Math.min(100, identity.score * 7)}%` }} /></i>
+                </div>
+              ))}
+            </div>
+            <p className="identity-hint">{progression.primary.description}</p>
+          </div>
+
+          <div className="rail-section mandate">
+            <span className="eyebrow">STARTING POWER</span>
             <h2>{philosophyMap[state.philosophy].name}</h2>
             <p>{philosophyMap[state.philosophy].scoringBonus}</p>
             <div className="preferred-tags">

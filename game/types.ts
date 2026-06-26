@@ -33,6 +33,15 @@ export type ResourceKey =
   | "patience"
   | "optionality";
 
+export type PhilosophyIdentityKey =
+  | "builder"
+  | "contrarian"
+  | "empire-builder"
+  | "momentum-trader"
+  | "optionality-hunter"
+  | "macro-thinker"
+  | "compounder";
+
 export type Resources = Record<ResourceKey, number>;
 export type CompanyTraits = Record<TraitKey, number>;
 
@@ -172,6 +181,22 @@ export interface InvestmentRecord {
   realizedValue: number;
 }
 
+export interface PhilosophyIdentity {
+  key: PhilosophyIdentityKey;
+  name: string;
+  description: string;
+  score: number;
+}
+
+export interface PhilosophyProgression {
+  primary: PhilosophyIdentity;
+  runnerUp: PhilosophyIdentity;
+  identities: PhilosophyIdentity[];
+  strengths: string[];
+  weaknesses: string[];
+  evolution: string;
+}
+
 export interface GameState {
   phase: TurnPhase;
   turn: number;
@@ -223,6 +248,7 @@ export interface GameSummary {
   returnPercent: number;
   legacyScore: number;
   wisdomScore: number;
+  philosophyProgression: PhilosophyProgression;
   bestInvestment: string;
   worstInvestment: string;
   bestDecision: string;
