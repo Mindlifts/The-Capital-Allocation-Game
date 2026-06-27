@@ -32,7 +32,7 @@ import { ResourceBar } from "@/game/components/ResourceBar";
 import { WarRoomAudio } from "@/game/components/WarRoomAudio";
 import { WarRoomTimelines } from "@/game/components/WarRoomTimelines";
 import { RouteMap } from "@/game/components/RouteMap";
-import { companyMemoryLine, localMemoryStore, memoryInsights } from "@/game/memory";
+import { companyMemoryLine, emptyPlayerMemory, institutionalTrustValue, localMemoryStore, memoryInsights } from "@/game/memory";
 import type { PlayerMemory } from "@/game/memory";
 import { LegacyArchive } from "@/game/components/LegacyArchive";
 
@@ -239,13 +239,15 @@ export default function CapitalGamePage() {
   }, [screen, state?.phase, state?.opportunityIndex]);
 
   const beginGame = () => {
-    setState(initializeGame(selectedPhilosophy));
+    setState(initializeGame(selectedPhilosophy, undefined, { institutionalTrust: institutionalTrustValue(playerMemory) }));
     setScreen("game");
     setShowOnboarding(true);
   };
 
   const restart = () => {
-    setState(initializeGame(selectedPhilosophy));
+    const latestMemory = localMemoryStore.load();
+    setPlayerMemory(latestMemory);
+    setState(initializeGame(selectedPhilosophy, undefined, { institutionalTrust: institutionalTrustValue(latestMemory) }));
     setScreen("game");
     setShowOnboarding(false);
   };
@@ -293,7 +295,7 @@ export default function CapitalGamePage() {
     );
   }
 
-  if (screen === "archive") return <LegacyArchive memory={playerMemory ?? { schemaVersion: 1, runs: [] }} onClose={() => setScreen("start")} />;
+  if (screen === "archive") return <LegacyArchive memory={playerMemory ?? emptyPlayerMemory()} onClose={() => setScreen("start")} />;
 
   if (screen === "philosophy") {
     return (

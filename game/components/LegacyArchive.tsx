@@ -11,6 +11,9 @@ export function LegacyArchive({ memory, onClose }: { memory: PlayerMemory; onClo
         <h1>Your past philosophies<br />are still watching.</h1>
         <p>Successes become instincts. Mistakes become warnings. Nothing completed here disappears.</p>
       </header>
+      {memory.hiddenSystems?.["institutional-trust"]?.discovered && (
+        <section className="discovered-codex"><span>DISCOVERED HIDDEN SYSTEM</span><strong>Institutional Trust</strong><p>Consistent conviction improves access to rarer mental models. This system was active before you learned its name.</p></section>
+      )}
       {memory.runs.length ? <section className="artifact-grid">{memory.runs.map((run, index) => <RunArtifact artifact={run} featured={index === 0} key={run.runId} />)}</section> : <section className="empty-archive"><span>◇</span><h2>No artifacts yet.</h2><p>Complete one run and the archive will remember who you became.</p></section>}
     </main>
   );

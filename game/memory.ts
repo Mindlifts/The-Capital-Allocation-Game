@@ -2,7 +2,7 @@ import { archetypeMap } from "./config";
 import { summarizeGame } from "./engine";
 import type { GameState, OpportunityActionType, PhilosophyIdentityKey } from "./types";
 
-export const MEMORY_SCHEMA_VERSION = 1;
+export const MEMORY_SCHEMA_VERSION = 2;
 export const MEMORY_STORAGE_KEY = "capital-allocation-player-memory";
 
 export interface CompanyRunMemory {
@@ -42,6 +42,16 @@ export interface CompletedRunMemory {
 export interface PlayerMemory {
   schemaVersion: number;
   runs: CompletedRunMemory[];
+  hiddenSystems: Record<string, HiddenSystemMemory>;
+}
+
+export interface HiddenSystemMemory {
+  id: string;
+  name: string;
+  value: number;
+  discovered: boolean;
+  discoveredAtRun: number | null;
+  evidence: string[];
 }
 
 export interface MemoryStore {
@@ -49,7 +59,11 @@ export interface MemoryStore {
   save(memory: PlayerMemory): void;
 }
 
-export const emptyPlayerMemory = (): PlayerMemory => ({ schemaVersion: MEMORY_SCHEMA_VERSION, runs: [] });
+const initialHiddenSystems = (): PlayerMemory["hiddenSystems"] => ({
+  "institutional-trust": { id: "institutional-trust", name: "Institutional Trust", value: 0, discovered: false, discoveredAtRun: null, evidence: [] },
+});
+
+export const emptyPlayerMemory = (): PlayerMemory => ({ schemaVersion: MEMORY_SCHEMA_VERSION, runs: [], hiddenSystems: initialHiddenSystems() });
 
 export class LocalStorageMemoryStore implements MemoryStore {
   load(): PlayerMemory {
@@ -57,7 +71,7 @@ export class LocalStorageMemoryStore implements MemoryStore {
     try {
       const parsed = JSON.parse(window.localStorage.getItem(MEMORY_STORAGE_KEY) ?? "null") as PlayerMemory | null;
       if (!parsed || !Array.isArray(parsed.runs)) return emptyPlayerMemory();
-      return { schemaVersion: MEMORY_SCHEMA_VERSION, runs: parsed.runs };
+      return { schemaVersion: MEMORY_SCHEMA_VERSION, runs: parsed.runs, hiddenSystems: { ...initialHiddenSystems(), ...(parsed.hiddenSystems ?? {}) } };
     } catch {
       return emptyPlayerMemory();
     }
@@ -165,14 +179,41 @@ export function rememberCompletedRun(store: MemoryStore, state: GameState) {
   const memory = store.load();
   const record = createCompletedRunMemory(state);
   const runs = [record, ...memory.runs.filter((run) => run.runId !== record.runId)].slice(0, 50);
-  const next = { schemaVersion: MEMORY_SCHEMA_VERSION, runs };
+  const trust = memory.hiddenSystems["institutional-trust"] ?? initialHiddenSystems()["institutional-trust"];
+  const trustGain = Math.max(0, record.convictionDecisions * 1.25 + record.legacyScore / 30 - record.panicDecisions * 2.5);
+  const trustValue = Number((trust.value + trustGain).toFixed(1));
+  const discovered = trust.discovered || (runs.length >= 3 && trustValue >= 18);
+  const evidence = [
+    ...(record.convictionDecisions >= 3 ? [`Run #${String(record.runId).slice(-4)}: conviction survived repeated uncertainty.`] : []),
+    ...(record.panicDecisions === 0 ? [`Run #${String(record.runId).slice(-4)}: no panic decision was recorded.`] : []),
+    ...trust.evidence,
+  ].slice(0, 6);
+  const next = {
+    schemaVersion: MEMORY_SCHEMA_VERSION,
+    runs,
+    hiddenSystems: {
+      ...memory.hiddenSystems,
+      "institutional-trust": {
+        ...trust,
+        value: trustValue,
+        discovered,
+        discoveredAtRun: !trust.discovered && discovered ? record.runId : trust.discoveredAtRun,
+        evidence,
+      },
+    },
+  };
   store.save(next);
   return next;
+}
+
+export function institutionalTrustValue(memory: PlayerMemory | null) {
+  return memory?.hiddenSystems?.["institutional-trust"]?.value ?? 0;
 }
 
 export function memoryInsights(memory: PlayerMemory) {
   if (!memory.runs.length) return ["No prior run exists. The game has not learned your habits yet."];
   const insights: string[] = [];
+  if (memory.hiddenSystems?.["institutional-trust"]?.discovered) insights.push("Institutional Trust now follows you between runs.");
   const latest = memory.runs[0];
   const earlySale = latest.companyMemories.find((item) => item.action === "sell" && (item.outcomePercent ?? 0) > 3);
   const missedWinner = latest.companyMemories.find((item) => (item.action === "ignore" || item.action === "watchlist") && (item.outcomePercent ?? 0) > 8);

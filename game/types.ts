@@ -384,6 +384,9 @@ export interface GameState {
   legacyScore: number;
   wisdomScore: number;
   seed: number;
+  hiddenModifiers: {
+    institutionalTrust: number;
+  };
 }
 
 export interface Mover {

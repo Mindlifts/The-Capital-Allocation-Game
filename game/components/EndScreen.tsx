@@ -14,6 +14,7 @@ export function EndScreen({ state, onRestart }: { state: GameState; onRestart: (
   const philosophy = philosophyMap[state.philosophy];
   const currentMemory = useMemo(() => createCompletedRunMemory(state), [state]);
   const [playerMemory, setPlayerMemory] = useState(emptyPlayerMemory);
+  const discoveredTrust = playerMemory.hiddenSystems?.["institutional-trust"];
   const comparison = useMemo(() => {
     const prior = playerMemory.runs.filter((run) => run.runId !== state.runId);
     if (!prior.length) return "First recorded run on this device. Future reports will compare your philosophy against this baseline.";
@@ -43,6 +44,18 @@ export function EndScreen({ state, onRestart }: { state: GameState; onRestart: (
           <span>RUN ARTIFACT CREATED</span>
           <RunArtifact artifact={currentMemory} featured />
         </div>
+
+        {discoveredTrust?.discoveredAtRun === state.runId && (
+          <section className="hidden-system-discovery">
+            <span>HIDDEN SYSTEM DISCOVERED</span>
+            <div className="hidden-system-sigil">⌘</div>
+            <p>You discovered...</p>
+            <h2>Institutional Trust</h2>
+            <strong>It existed all along.</strong>
+            <blockquote>Across multiple runs, you kept commitments alive through uncertainty without repeatedly surrendering to panic. Patient institutions have noticed.</blockquote>
+            <div><b>Permanent effect</b><p>Your reputation quietly improves access to rarer Investor Cards in future runs—even before this system was named.</p></div>
+          </section>
+        )}
 
         <div className="score-grid">
           <div className="hero-score">

@@ -66,21 +66,22 @@ function shuffled<T>(items: T[], seed: number) {
   return { items: result, seed: nextSeed };
 }
 
-function cardWeight(card: InvestorCard) {
-  if (card.rarity === "Legendary") return 3;
-  if (card.rarity === "Epic") return 7;
-  if (card.rarity === "Rare") return 14;
-  return 28;
+function cardWeight(card: InvestorCard, institutionalTrust = 0) {
+  const influence = Math.min(10, Math.floor(institutionalTrust / 3));
+  if (card.rarity === "Legendary") return 3 + influence;
+  if (card.rarity === "Epic") return 7 + Math.floor(influence * 0.8);
+  if (card.rarity === "Rare") return 14 + Math.floor(influence * 0.5);
+  return Math.max(18, 28 - influence);
 }
 
-function generateDraftOffer(seed: number, draftedIds: string[], count = 3) {
+function generateDraftOffer(seed: number, draftedIds: string[], count = 3, institutionalTrust = 0) {
   let nextSeed = seed;
   const offer: InvestorCard[] = [];
   const available = investorCards.filter((card) => !draftedIds.includes(card.id));
   while (offer.length < count && offer.length < available.length) {
     const weighted = available
       .filter((card) => !offer.some((item) => item.id === card.id))
-      .flatMap((card) => Array.from({ length: cardWeight(card) }, () => card));
+      .flatMap((card) => Array.from({ length: cardWeight(card, institutionalTrust) }, () => card));
     const picked = pick(weighted, nextSeed);
     nextSeed = picked.seed;
     offer.push(picked.item);
@@ -130,6 +131,7 @@ function applyTraitBias(
 export function initializeGame(
   philosophy: PhilosophyKey,
   seed = Math.floor(Date.now() % 4294967295),
+  hiddenModifiers = { institutionalTrust: 0 },
 ): GameState {
   const selected = philosophyMap[philosophy];
   let nextSeed = seed;
@@ -177,7 +179,7 @@ export function initializeGame(
       lastChangeReason: `${industry?.label ?? "Unknown Theme"} · ${region?.label ?? "Unknown Region"}`,
     };
   });
-  const initialDraft = generateDraftOffer(nextSeed, []);
+  const initialDraft = generateDraftOffer(nextSeed, [], 3, hiddenModifiers.institutionalTrust);
   nextSeed = initialDraft.seed;
   const firstRound = generateRoundOpportunityIds(companyStates, nextSeed);
   nextSeed = firstRound.seed;
@@ -225,6 +227,7 @@ export function initializeGame(
     legacyScore: 0,
     wisdomScore: 0,
     seed: nextSeed,
+    hiddenModifiers,
   };
 }
 
@@ -1313,7 +1316,7 @@ export function chooseRoute(state: GameState, routeId: string): GameState {
   resources.credibility = clamp(resources.credibility + influenceBonus, 0, 10);
   resources.optionality = clamp(resources.optionality + optionalityBonus, 0, 10);
   const shouldDraft = draftTurns.has(state.turn);
-  const draft = shouldDraft ? generateDraftOffer(state.seed, state.draftedCardIds) : { offer: [], seed: state.seed };
+  const draft = shouldDraft ? generateDraftOffer(state.seed, state.draftedCardIds, 3, state.hiddenModifiers.institutionalTrust) : { offer: [], seed: state.seed };
   const round = generateRoundOpportunityIds(state.companies, draft.seed);
   const consequence = `${route.tradeoff} ${route.eventTarget ? `${route.eventTarget} events are now more likely.` : "The next world response remains partially hidden."}`;
   return {
