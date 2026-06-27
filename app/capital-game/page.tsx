@@ -34,8 +34,9 @@ import { WarRoomTimelines } from "@/game/components/WarRoomTimelines";
 import { RouteMap } from "@/game/components/RouteMap";
 import { companyMemoryLine, localMemoryStore, memoryInsights } from "@/game/memory";
 import type { PlayerMemory } from "@/game/memory";
+import { LegacyArchive } from "@/game/components/LegacyArchive";
 
-type Screen = "start" | "philosophy" | "game";
+type Screen = "start" | "philosophy" | "game" | "archive";
 
 const capital = (value: number) => `${Math.round(value).toLocaleString("en-US")}`;
 
@@ -268,6 +269,7 @@ export default function CapitalGamePage() {
             Face your first choice <span>→</span>
           </button>
           <div className="run-teaser"><i>✦</i><span>{playerMemory?.runs.length ? memoryInsights(playerMemory)[0] : "Every run ends with a different philosophy report."}</span></div>
+          <button type="button" className="archive-entry" onClick={() => setScreen("archive")}>Open Legacy Archive <span>{playerMemory?.runs.length ?? 0} artifacts</span></button>
         </section>
         <div className="landing-card-duel" aria-label="Examples of a company character and investor mental model">
           <article className="entry-card entry-company">
@@ -290,6 +292,8 @@ export default function CapitalGamePage() {
       </main>
     );
   }
+
+  if (screen === "archive") return <LegacyArchive memory={playerMemory ?? { schemaVersion: 1, runs: [] }} onClose={() => setScreen("start")} />;
 
   if (screen === "philosophy") {
     return (

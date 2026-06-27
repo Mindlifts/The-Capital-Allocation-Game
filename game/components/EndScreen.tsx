@@ -6,6 +6,7 @@ import { summarizeGame } from "../engine";
 import type { GameState } from "../types";
 import { WarRoomTimelines } from "./WarRoomTimelines";
 import { createCompletedRunMemory, emptyPlayerMemory, localMemoryStore, memoryInsights, rememberCompletedRun } from "../memory";
+import { RunArtifact } from "./RunArtifact";
 
 const capital = (value: number) => `${Math.round(value).toLocaleString("en-US")} capital`;
 export function EndScreen({ state, onRestart }: { state: GameState; onRestart: () => void }) {
@@ -37,6 +38,11 @@ export function EndScreen({ state, onRestart }: { state: GameState; onRestart: (
         <p className="report-label">YOUR PHILOSOPHY</p>
         <h1>{summary.philosophyProgression.primary.name}</h1>
         <p className="end-thesis">{summary.philosophyProgression.primary.description}</p>
+
+        <div className="artifact-reveal">
+          <span>RUN ARTIFACT CREATED</span>
+          <RunArtifact artifact={currentMemory} featured />
+        </div>
 
         <div className="score-grid">
           <div className="hero-score">

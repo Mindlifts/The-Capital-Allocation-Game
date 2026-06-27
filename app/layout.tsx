@@ -5,6 +5,7 @@ import "./route-map.css";
 import "./character-encounter.css";
 import "./landing-entry.css";
 import "./memory-engine.css";
+import "./run-artifacts.css";
 
 export const metadata: Metadata = {
   title: "Capital Allocation Game",

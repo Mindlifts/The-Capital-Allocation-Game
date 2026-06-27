@@ -31,6 +31,12 @@ export interface CompletedRunMemory {
   wisdomScore: number;
   finalValue: number;
   companyMemories: CompanyRunMemory[];
+  artifactTitle: string;
+  fateLabel: string;
+  fate: string;
+  legend: string;
+  investorCards: string[];
+  rememberedCompanies: string[];
 }
 
 export interface PlayerMemory {
@@ -97,8 +103,29 @@ function favoriteCard(state: GameState) {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "No card drafted";
 }
 
+function artifactTitle(state: GameState, philosophy: string) {
+  if (state.behavior.panicSells >= 2) return "The Broken Conviction";
+  if (state.behavior.optionalityBets >= 3) return "The Door Collector";
+  if (philosophy === "Builder") return state.behavior.holds >= 2 ? "The Forgotten Builder" : "The Restless Builder";
+  if (philosophy === "Contrarian") return "The Last Dissenter";
+  if (philosophy === "Compounder") return "The Long Vigil";
+  if (philosophy === "Empire Builder") return "The Architect of Many Roads";
+  if (philosophy === "Momentum Trader") return "The Rider of Bright Waves";
+  if (philosophy === "Optionality Hunter") return "The Keeper of Unopened Doors";
+  if (philosophy === "Macro Thinker") return "The Reader of Distant Storms";
+  return "The Unfinished Philosophy";
+}
+
+function runFate(state: GameState, finalValue: number) {
+  const negativeEvent = state.logs.find((log) => log.id.startsWith("event-") && log.tone === "negative");
+  const positiveEvent = state.logs.find((log) => log.id.startsWith("event-") && log.tone === "positive");
+  if (finalValue < state.initialCapital) return { label: "BROKEN BY", text: negativeEvent?.title ?? "A thesis that outlived its evidence" };
+  return { label: "SURVIVED", text: positiveEvent?.title ?? "Ten turns of uncertainty" };
+}
+
 export function createCompletedRunMemory(state: GameState): CompletedRunMemory {
   const summary = summarizeGame(state);
+  const fate = runFate(state, summary.finalValue);
   const latestByCompany = new Map<string, CompanyRunMemory>();
   state.decisionMemos.forEach((memo) => latestByCompany.set(memo.companyId, {
     companyId: memo.companyId,
@@ -125,6 +152,12 @@ export function createCompletedRunMemory(state: GameState): CompletedRunMemory {
     wisdomScore: summary.wisdomScore,
     finalValue: summary.finalValue,
     companyMemories: [...latestByCompany.values()],
+    artifactTitle: artifactTitle(state, summary.philosophyProgression.primary.name),
+    fateLabel: fate.label,
+    fate: fate.text,
+    legend: `${summary.philosophyProgression.primary.name} by instinct. Remembered for ${summary.bestDecision.toLowerCase()}. Haunted by ${summary.worstDecision.toLowerCase()}.`,
+    investorCards: state.investorDeck.map((card) => card.title),
+    rememberedCompanies: [...new Set(state.decisionMemos.map((memo) => memo.companyName))],
   };
 }
 
