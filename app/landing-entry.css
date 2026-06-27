@@ -1,0 +1,38 @@
+.run-entry-screen .start-content { width: min(720px, 51vw); margin-top: clamp(62px, 11vh, 125px); }
+.run-entry-screen .start-content h1 { max-width: 760px; }
+.run-entry-screen .start-content > p { max-width: 580px; margin-bottom: 28px; color: #b0bab7; font-size: 17px; }
+.identity-hook { margin: 0 0 30px; color: #f2dfaa; font: 600 clamp(18px, 1.7vw, 25px)/1.45 "Playfair Display", serif; }
+.identity-hook span { color: #fff5da; }
+.run-teaser { display: flex; align-items: center; gap: 10px; margin-top: 22px; color: #838f8c; font: 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.run-teaser i { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid rgba(225,189,101,.3); color: var(--gold); font-style: normal; }
+.landing-card-duel { position: absolute; z-index: 2; right: max(var(--stage-gutter), calc((100vw - var(--stage-max)) / 2)); top: 50%; width: min(570px, 42vw); height: 560px; transform: translateY(-48%); }
+.entry-card { position: absolute; width: 310px; min-height: 445px; padding: 20px; border: 1px solid rgba(225,189,101,.42); border-radius: 17px; overflow: hidden; background: linear-gradient(145deg, rgba(255,255,255,.045), transparent 22%), radial-gradient(circle at 50% 18%, rgba(225,189,101,.17), transparent 35%), #090d0e; box-shadow: 0 45px 120px rgba(0,0,0,.68); }
+.entry-card::before { content: ""; position: absolute; inset: 9px; border: 1px solid rgba(225,189,101,.16); border-radius: 11px; pointer-events: none; }
+.entry-company { left: 0; bottom: 12px; transform: rotate(-5deg); }
+.entry-investor { right: 0; top: 0; transform: rotate(5deg); border-color: rgba(197,145,255,.44); }
+.entry-card:hover { z-index: 4; transform: translateY(-8px) rotate(0); transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+.entry-card-top { position: relative; z-index: 1; display: flex; justify-content: space-between; color: var(--gold); font: 8px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.entry-card-art { position: relative; height: 190px; margin: 18px 0; overflow: hidden; border: 1px solid rgba(225,189,101,.25); background: radial-gradient(circle at 58% 28%, rgba(244,214,133,.25), transparent 15%), linear-gradient(165deg, #26352f, #101719 54%, #080a0a); }
+.entry-card-art::before { content: ""; position: absolute; inset: 42% -10% -20%; clip-path: polygon(0 55%, 18% 12%, 34% 54%, 55% 0, 74% 57%, 88% 25%, 100% 58%, 100% 100%, 0 100%); background: linear-gradient(135deg, #3b334b, #080b0c 75%); }
+.entry-card-art::after { content: ""; position: absolute; left: 48%; top: 37%; width: 14px; height: 95px; background: linear-gradient(90deg, #e6d8ad 0 30%, transparent 31% 55%, #9b9073 56%); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); filter: drop-shadow(0 0 14px rgba(244,214,133,.25)); }
+.entry-portrait { position: relative; height: 190px; margin: 18px 0; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(197,145,255,.28); background: radial-gradient(circle at 50% 42%, rgba(197,145,255,.22), transparent 22%), linear-gradient(145deg, #251d2d, #090b0d); }
+.entry-portrait::before, .entry-portrait::after { content: ""; position: absolute; width: 125px; height: 125px; border: 1px solid rgba(225,189,101,.24); border-radius: 50%; }
+.entry-portrait::after { width: 78px; height: 78px; }
+.entry-portrait span { position: relative; z-index: 1; color: #e2c1ff; font: 70px "Playfair Display", serif; text-shadow: 0 0 35px rgba(197,145,255,.4); }
+.entry-card h2 { position: relative; margin: 0; color: #fff4d8; font: 600 27px/1 "Playfair Display", serif; }
+.entry-card h3 { margin: 7px 0 12px; color: var(--gold); font: 8px var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+.entry-card > p { color: #adb7b3; font-size: 11px; line-height: 1.55; }
+.entry-card-rule { position: relative; margin-top: 15px; padding: 11px; border-left: 2px solid var(--gold); background: rgba(225,189,101,.055); color: #ddd6c3; font-size: 10px; line-height: 1.5; }
+.entry-investor .entry-card-rule { border-color: #c591ff; }
+.duel-caption { position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%); width: max-content; color: #677270; font: 8px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+@media (max-width: 1050px) {
+  .landing-card-duel { opacity: .22; right: -110px; }
+  .run-entry-screen .start-content { width: min(760px, calc(100vw - 14vw)); }
+}
+@media (max-width: 700px) {
+  .run-entry-screen .start-content { margin: 62px 24px 80px; width: auto; }
+  .run-entry-screen .start-content h1 { font-size: clamp(46px, 13vw, 64px); }
+  .run-entry-screen .start-content > p { font-size: 14px; }
+  .landing-card-duel { display: none; }
+  .identity-hook { font-size: 19px; }
+}

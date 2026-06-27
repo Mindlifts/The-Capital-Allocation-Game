@@ -1,55 +1,32 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { philosophyMap } from "../config";
 import { summarizeGame } from "../engine";
 import type { GameState } from "../types";
 import { WarRoomTimelines } from "./WarRoomTimelines";
+import { createCompletedRunMemory, emptyPlayerMemory, localMemoryStore, memoryInsights, rememberCompletedRun } from "../memory";
 
 const capital = (value: number) => `${Math.round(value).toLocaleString("en-US")} capital`;
-const HISTORY_KEY = "capital-allocation-game-runs";
-
-interface StoredRun {
-  runId: number;
-  philosophy: string;
-  wisdom: number;
-  legacy: number;
-  finalValue: number;
-}
-
 export function EndScreen({ state, onRestart }: { state: GameState; onRestart: () => void }) {
   const summary = summarizeGame(state);
   const philosophy = philosophyMap[state.philosophy];
-  const previousRuns = useMemo<StoredRun[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      return JSON.parse(window.localStorage.getItem(HISTORY_KEY) ?? "[]") as StoredRun[];
-    } catch {
-      return [];
-    }
-  }, []);
+  const currentMemory = useMemo(() => createCompletedRunMemory(state), [state]);
+  const [playerMemory, setPlayerMemory] = useState(emptyPlayerMemory);
   const comparison = useMemo(() => {
-    const prior = previousRuns.filter((run) => run.runId !== state.runId);
+    const prior = playerMemory.runs.filter((run) => run.runId !== state.runId);
     if (!prior.length) return "First recorded run on this device. Future reports will compare your philosophy against this baseline.";
-    const avgWisdom = prior.reduce((total, run) => total + run.wisdom, 0) / prior.length;
-    const avgLegacy = prior.reduce((total, run) => total + run.legacy, 0) / prior.length;
+    const avgWisdom = prior.reduce((total, run) => total + run.wisdomScore, 0) / prior.length;
+    const avgLegacy = prior.reduce((total, run) => total + run.legacyScore, 0) / prior.length;
     const priorSame = prior.filter((run) => run.philosophy === summary.philosophyProgression.primary.name).length;
     const wisdomDelta = summary.wisdomScore - avgWisdom;
     const legacyDelta = summary.legacyScore - avgLegacy;
     return `${wisdomDelta >= 0 ? "Above" : "Below"} your prior wisdom average by ${Math.abs(wisdomDelta).toFixed(1)}. ${legacyDelta >= 0 ? "Above" : "Below"} prior legacy by ${Math.abs(legacyDelta).toFixed(1)}. You have ended as ${summary.philosophyProgression.primary.name} ${priorSame} time${priorSame === 1 ? "" : "s"} before.`;
-  }, [previousRuns, state.runId, summary]);
+  }, [playerMemory.runs, state.runId, summary]);
 
   useEffect(() => {
-    const nextRun: StoredRun = {
-      runId: state.runId,
-      philosophy: summary.philosophyProgression.primary.name,
-      wisdom: summary.wisdomScore,
-      legacy: summary.legacyScore,
-      finalValue: summary.finalValue,
-    };
-    const withoutDuplicate = previousRuns.filter((run) => run.runId !== state.runId);
-    window.localStorage.setItem(HISTORY_KEY, JSON.stringify([nextRun, ...withoutDuplicate].slice(0, 12)));
-  }, [previousRuns, state.runId, summary.finalValue, summary.legacyScore, summary.philosophyProgression.primary.name, summary.wisdomScore]);
+    setPlayerMemory(rememberCompletedRun(localMemoryStore, state));
+  }, [state]);
 
   return (
     <main className="end-screen">
@@ -108,6 +85,19 @@ export function EndScreen({ state, onRestart }: { state: GameState; onRestart: (
           <div><span>BEST MEMO</span><strong>{summary.bestMemo}</strong></div>
           <div><span>HARDEST MEMO</span><strong>{summary.worstMemo}</strong></div>
           <div><span>BIGGEST LESSON</span><strong>{summary.lesson}</strong></div>
+        </div>
+
+        <div className="memory-report">
+          <span>WHAT THE GAME WILL REMEMBER</span>
+          <div>
+            <p><small>Greatest success</small><strong>{currentMemory.greatestSuccess}</strong></p>
+            <p><small>Biggest mistake</small><strong>{currentMemory.biggestMistake}</strong></p>
+            <p><small>Average holding period</small><strong>{currentMemory.averageHoldingPeriod || "No completed hold"} {currentMemory.averageHoldingPeriod ? "turns" : ""}</strong></p>
+            <p><small>Favorite company type</small><strong>{currentMemory.favoriteCompanyArchetype}</strong></p>
+            <p><small>Favorite mental model</small><strong>{currentMemory.favoriteInvestorCard}</strong></p>
+            <p><small>Conviction / panic</small><strong>{currentMemory.convictionDecisions} conviction · {currentMemory.panicDecisions} panic</strong></p>
+          </div>
+          <blockquote>{memoryInsights(playerMemory)[0]}</blockquote>
         </div>
 
         <WarRoomTimelines state={state} />
