@@ -2,6 +2,8 @@
 
 A fictional strategy roguelike about capital allocation under uncertainty.
 
+> **North star:** Every new mechanic must make the player a better decision-maker, not just a richer virtual investor.
+
 The player is not trying to memorize finance or optimize a spreadsheet. The
 player is building an investment philosophy through curiosity, incomplete
 information, scarce resources, conviction, regret, discovery, and adaptation.
@@ -35,6 +37,7 @@ preserving the fictional universe.
   archetypes, and philosophies.
 - `game/components` holds reusable game UI components.
 - `DESIGN_PROPOSAL.md` documents the roguelike pivot and the next design target.
+- `AGENTS.md` contains the mandatory design rule and contributor guardrails.
 
 ## Run locally
 

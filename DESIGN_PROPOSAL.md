@@ -1,5 +1,9 @@
 # Capital Allocation Game: Roguelike Pivot Proposal
 
+> **North star:** Every new mechanic must make the player a better decision-maker, not just a richer virtual investor.
+
+All design choices below are subordinate to this rule. When richer simulation conflicts with clearer judgment, emotional consequence, or memorable decision-making, choose the latter.
+
 ## North star
 
 This project should become a short strategy roguelike about judgment under uncertainty. The player is not optimizing a portfolio. The player is forming an investment philosophy through imperfect reads, scarce resources, character-like companies, world events, regret, and adaptation.
