@@ -67,6 +67,23 @@
 .event-decision-prompt span { display: block; color: var(--gold); font: 9px var(--mono); letter-spacing: .15em; margin-bottom: 7px; }
 .event-decision-prompt strong { color: #fff3d2; font: 600 17px/1.5 "Playfair Display", serif; }
 
+.reflection-beats { display: grid; gap: 10px; margin-top: 20px; }
+.reflection-beat { position: relative; padding: clamp(18px, 2.5vw, 28px); border: 1px solid rgba(225,189,101,.18); background: linear-gradient(135deg, rgba(255,255,255,.04), rgba(0,0,0,.18)); overflow: hidden; }
+.reflection-beat::after { content: ""; position: absolute; width: 180px; height: 180px; right: -85px; top: -95px; border: 1px solid rgba(225,189,101,.1); border-radius: 50%; }
+.reflection-beat > span { color: var(--gold); font: 8px var(--mono); letter-spacing: .16em; }
+.reflection-beat h3 { margin: 9px 0 7px; color: #fff3d6; font: 600 clamp(24px, 3vw, 38px)/1 "Playfair Display", serif; }
+.reflection-beat p { max-width: 850px; margin: 0; color: #d2dad6; font-size: 15px; line-height: 1.55; }
+.reflection-beat small { display: block; max-width: 850px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.07); color: #8f9a97; font-size: 12px; line-height: 1.55; }
+.beat-cost.positive h3 { color: var(--green); }
+.beat-cost.negative h3 { color: var(--red); }
+.beat-unresolved { border-color: rgba(244,214,133,.38); background: linear-gradient(115deg, rgba(225,189,101,.11), rgba(0,0,0,.18)); }
+.reflection-details { margin-top: 12px; border: 1px solid rgba(255,255,255,.09); background: rgba(0,0,0,.18); }
+.reflection-details summary { padding: 15px 18px; display: flex; justify-content: space-between; align-items: center; color: #b9c2be; font: 10px var(--mono); letter-spacing: .1em; cursor: pointer; list-style: none; }
+.reflection-details summary::-webkit-details-marker { display: none; }
+.reflection-details[open] summary { color: var(--gold); border-bottom: 1px solid rgba(255,255,255,.08); }
+.reflection-details[open] summary span { transform: rotate(45deg); }
+.reflection-detail-body { padding: 14px; }
+
 @media (max-width: 760px) {
   .result-lines,
   .result-card .moment-stack { grid-template-columns: 1fr; }
