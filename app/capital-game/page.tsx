@@ -173,11 +173,11 @@ function OpportunityCard({
       </div>
 
       <p className="company-story">
-        {company.name} wants {company.desire.toLowerCase()} but is haunted by {company.flaw.toLowerCase()}.
-        This run adds: <strong>{company.opportunity.title}</strong> — {company.opportunity.lore}
+        {company.story}
+        <span className="chapter-change"><b>THIS RUN’S NEW CHAPTER</b><strong>{company.opportunity.title}</strong>{company.opportunity.lore} The opportunity is real, but {company.opportunity.risk.toLowerCase()}</span>
       </p>
 
-      <p className="choice-oath">{company.desire} The question is what you are willing to risk on that belief.</p>
+      <div className="choice-oath"><small>THE DECISION IN FRONT OF YOU</small><strong>{company.decisionQuestion}</strong></div>
 
       <div className="character-signals">
         {signals.map((signal) => <div className="character-signal" key={signal.key}><span>{signal.label}</span><strong>{signal.title}</strong><p>{signal.body}</p></div>)}

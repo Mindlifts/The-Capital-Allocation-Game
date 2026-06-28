@@ -13,8 +13,16 @@
 .relationship-memory span { display: block; color: #697573; font: 7px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
 .relationship-memory strong { display: block; margin-top: 7px; color: #dbe1dd; font-size: 11px; line-height: 1.5; }
 .focused-card .signal-strip, .focused-card .hidden-strip, .focused-card .takeaway-grid { display: none; }
-.focused-card .choice-oath { margin-top: -4px; }
+.company-story { font-size: 15px; line-height: 1.65; }
+.chapter-change { display: grid; grid-template-columns: auto auto 1fr; gap: 8px 12px; align-items: baseline; margin-top: 14px; padding: 13px 15px; border: 1px solid rgba(225,189,101,.16); background: rgba(0,0,0,.16); color: #aeb8b5; font-size: 11px; line-height: 1.5; }
+.chapter-change b { color: var(--gold); font: 7px var(--mono); letter-spacing: .13em; }
+.chapter-change strong { color: #f0e5c8; font: 13px "Playfair Display", serif; }
+.focused-card .choice-oath { margin: 14px 0 18px; padding: 15px 17px; }
+.choice-oath small, .choice-oath strong { display: block; }
+.choice-oath small { margin-bottom: 6px; color: var(--gold); font: 7px var(--mono); letter-spacing: .14em; }
+.choice-oath strong { color: #f0dfb2; font: italic 16px/1.55 "Playfair Display", serif; }
 @media (max-width: 760px) {
   .character-signals, .relationship-memory { grid-template-columns: 1fr; }
   .character-signal { min-height: 0; }
+  .chapter-change { grid-template-columns: 1fr; }
 }
