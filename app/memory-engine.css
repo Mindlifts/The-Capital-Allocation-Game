@@ -1,0 +1,9 @@
+.memory-report { margin: 24px 0; padding: clamp(20px, 3vw, 30px); border: 1px solid rgba(225,189,101,.3); background: radial-gradient(circle at 50% 0%, rgba(225,189,101,.09), transparent 42%), rgba(8,12,13,.76); text-align: left; }
+.memory-report > span { color: var(--gold); font: 9px var(--mono); letter-spacing: .16em; }
+.memory-report > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+.memory-report p { margin: 0; padding: 14px; border: 1px solid rgba(255,255,255,.07); background: rgba(255,255,255,.018); }
+.memory-report small, .memory-report strong { display: block; }
+.memory-report small { color: #737f7c; font: 7px var(--mono); letter-spacing: .11em; text-transform: uppercase; }
+.memory-report strong { margin-top: 7px; color: #e3e7e2; font-size: 12px; line-height: 1.5; }
+.memory-report blockquote { margin: 14px 0 0; padding: 14px 16px; border-left: 2px solid var(--gold); background: rgba(225,189,101,.05); color: #eadcb5; font: italic 15px/1.6 "Playfair Display", serif; }
+@media (max-width: 760px) { .memory-report > div { grid-template-columns: 1fr; } }

@@ -32,8 +32,11 @@ import { ResourceBar } from "@/game/components/ResourceBar";
 import { WarRoomAudio } from "@/game/components/WarRoomAudio";
 import { WarRoomTimelines } from "@/game/components/WarRoomTimelines";
 import { RouteMap } from "@/game/components/RouteMap";
+import { companyMemoryLine, emptyPlayerMemory, institutionalTrustValue, localMemoryStore, memoryInsights } from "@/game/memory";
+import type { PlayerMemory } from "@/game/memory";
+import { LegacyArchive } from "@/game/components/LegacyArchive";
 
-type Screen = "start" | "philosophy" | "game";
+type Screen = "start" | "philosophy" | "game" | "archive";
 
 const capital = (value: number) => `${Math.round(value).toLocaleString("en-US")}`;
 
@@ -114,18 +117,21 @@ function unresolvedQuestion(company: CompanyState) {
 function OpportunityCard({
   company,
   state,
+  playerMemory,
 }: {
   company: CompanyState;
   state: GameState;
+  playerMemory: PlayerMemory | null;
 }) {
   const position = positionValue(state, company.id);
   const change = company.recentChange * 100;
   const hidden = hiddenLabels(company);
   const signals = characterSignals(company);
   const lastMemo = [...state.decisionMemos].reverse().find((memo) => memo.companyId === company.id);
+  const rememberedBefore = companyMemoryLine(playerMemory, company.id);
   const memory = lastMemo
-    ? `You chose to ${lastMemo.action} because “${lastMemo.reason}”${lastMemo.result ? ` The world answered ${lastMemo.result.changePercent >= 0 ? "in your favor" : "against you"}.` : "."}`
-    : `${company.name} has no history with you yet. This first judgment will become part of its story.`;
+    ? `This run, you chose to ${lastMemo.action} because “${lastMemo.reason}”${lastMemo.result ? ` The world answered ${lastMemo.result.changePercent >= 0 ? "in your favor" : "against you"}.` : "."}`
+    : rememberedBefore ?? `${company.name} has no history with you yet. This first judgment will become part of its story.`;
   const themeGlyph = industryGlyph[company.industry] ?? "◇";
   const risk = riskLevel(company);
   return (
@@ -222,61 +228,74 @@ export default function CapitalGamePage() {
   const [selectedPhilosophy, setSelectedPhilosophy] = useState<PhilosophyKey>("deep-value");
   const [state, setState] = useState<GameState | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [playerMemory, setPlayerMemory] = useState<PlayerMemory | null>(null);
+
+  useEffect(() => {
+    setPlayerMemory(localMemoryStore.load());
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [screen, state?.phase, state?.opportunityIndex]);
 
   const beginGame = () => {
-    setState(initializeGame(selectedPhilosophy));
+    setState(initializeGame(selectedPhilosophy, undefined, { institutionalTrust: institutionalTrustValue(playerMemory) }));
     setScreen("game");
     setShowOnboarding(true);
   };
 
   const restart = () => {
-    setState(initializeGame(selectedPhilosophy));
+    const latestMemory = localMemoryStore.load();
+    setPlayerMemory(latestMemory);
+    setState(initializeGame(selectedPhilosophy, undefined, { institutionalTrust: institutionalTrustValue(latestMemory) }));
     setScreen("game");
     setShowOnboarding(false);
   };
 
   if (screen === "start") {
     return (
-      <main className="start-screen">
+      <main className="start-screen run-entry-screen">
         <div className="star-field" />
         <nav className="game-nav">
           <span className="wordmark"><i>CA</i> CAPITAL ALLOCATION</span>
-          <span>ROGUELIKE FIELD TEST · ONE DECISION AT A TIME</span>
+          <span>A TEN-ROUND STORY OF BELIEF UNDER PRESSURE</span>
         </nav>
         <section className="start-content">
-          <span className="eyebrow">A 10-ROUND ROGUELIKE OF CONVICTION UNDER UNCERTAINTY</span>
-          <h1>Build a philosophy,<br />one memorable decision at a time.</h1>
+          <span className="eyebrow">THE WORLD WILL REMEMBER WHAT YOU BELIEVED</span>
+          <h1>Back a character.<br />Become a philosophy.</h1>
           <p>
-            Companies are characters. Investor cards are mental models. Every round
-            shows three focused opportunities, then the world answers.
+            Eight fictional companies enter with ambition, secrets, and something to prove. Choose who deserves your conviction. Then live with what the world does to them.
           </p>
+          <div className="identity-hook">Will you become a <span>Builder</span>, Contrarian, Compounder—or Hype Chaser?</div>
           <button type="button" className="primary-button large" onClick={() => setScreen("philosophy")}>
-            Enter the doctrine room <span>→</span>
+            Face your first choice <span>→</span>
           </button>
-          <div className="start-stats">
-            <span><b>03</b> opportunities per round</span>
-            <span><b>01</b> important decision at a time</span>
-            <span><b>10</b> rounds to gain wisdom</span>
-          </div>
+          <div className="run-teaser"><i>✦</i><span>{playerMemory?.runs.length ? memoryInsights(playerMemory)[0] : "Every run ends with a different philosophy report."}</span></div>
+          <button type="button" className="archive-entry" onClick={() => setScreen("archive")}>Open Legacy Archive <span>{playerMemory?.runs.length ?? 0} artifacts</span></button>
         </section>
-        <div className="start-card-stack" aria-hidden="true">
-          <div className="ghost-card ghost-three" />
-          <div className="ghost-card ghost-two" />
-          <div className="preview-card">
-            <span className="preview-kicker">WORLD RESPONSE</span>
-            <b>◇</b>
-            <h3>The rock does not care about your thesis.</h3>
-            <div className="preview-line" /><div className="preview-line short" />
-          </div>
+        <div className="landing-card-duel" aria-label="Examples of a company character and investor mental model">
+          <article className="entry-card entry-company">
+            <div className="entry-card-top"><span>COMPANY CHARACTER</span><i>HIGH UNCERTAINTY</i></div>
+            <div className="entry-card-art" />
+            <h2>Silver Mammoth</h2><h3>The Glittering Mystery</h3>
+            <p>A colossal promise beneath a tiny treasury. It wants someone to believe before proof arrives.</p>
+            <div className="entry-card-rule">Will you fund the dream—or recognize the trap?</div>
+          </article>
+          <article className="entry-card entry-investor">
+            <div className="entry-card-top"><span>INVESTOR MENTAL MODEL</span><i>RARE</i></div>
+            <div className="entry-portrait"><span>◇</span></div>
+            <h2>The Contrarian</h2><h3>Power through neglect</h3>
+            <p>You become strongest when the crowd has stopped looking—but loneliness can disguise a bad idea.</p>
+            <div className="entry-card-rule">Buy what is misunderstood. Pay when neglect becomes deserved.</div>
+          </article>
+          <span className="duel-caption">A character asks. A philosophy answers.</span>
         </div>
         <p className="disclaimer">FICTIONAL STRATEGY GAME · NO REAL COMPANIES · NO INVESTMENT ADVICE</p>
       </main>
     );
   }
+
+  if (screen === "archive") return <LegacyArchive memory={playerMemory ?? emptyPlayerMemory()} onClose={() => setScreen("start")} />;
 
   if (screen === "philosophy") {
     return (
@@ -286,9 +305,9 @@ export default function CapitalGamePage() {
           <span>CAPITAL ALLOCATION // DOCTRINE ROOM</span>
         </nav>
         <section className="philosophy-content">
-          <span className="eyebrow">CHOOSE YOUR STARTING POWER</span>
-          <h1>What do you believe<br />before the world pushes back?</h1>
-          <p className="section-lead">Your doctrine changes outcomes, rewards certain behaviors, and creates a failure mode.</p>
+          <span className="eyebrow">YOUR FIRST INSTINCT</span>
+          <h1>What do you believe<br />before you know enough?</h1>
+          <p className="section-lead">Choose quickly. This is only who you are at the beginning—the run will decide who you become.</p>
           <div className="philosophy-grid">
             {philosophies.map((philosophy, index) => {
               const selected = philosophy.key === selectedPhilosophy;
@@ -316,7 +335,7 @@ export default function CapitalGamePage() {
             })}
           </div>
           <button type="button" className="primary-button philosophy-start" onClick={beginGame}>
-            Begin as {philosophyMap[selectedPhilosophy].name} <span>→</span>
+            Enter round one as {philosophyMap[selectedPhilosophy].name} <span>→</span>
           </button>
         </section>
       </main>
@@ -375,7 +394,7 @@ export default function CapitalGamePage() {
       {state.phase !== "world" && state.phase !== "reflect" && <MomentStack moments={state.moments} />}
 
       <section className="opportunity-scene" key={`${state.turn}-${state.opportunityIndex}-${state.phase === "reason" ? "reason" : "choice"}`}>
-        {company && <OpportunityCard company={company} state={state} />}
+        {company && <OpportunityCard company={company} state={state} playerMemory={playerMemory} />}
 
         <aside className="decision-panel">
           <div className="panel-card philosophy-pulse">
