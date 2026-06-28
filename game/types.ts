@@ -104,6 +104,8 @@ export interface CompanyConfig {
   role: string;
   desire: string;
   flaw: string;
+  story: string;
+  decisionQuestion: string;
   archetype: ArchetypeKey;
   industry: IndustryThemeKey;
   region: RegionKey;
