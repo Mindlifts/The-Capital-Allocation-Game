@@ -96,6 +96,58 @@ export interface OpportunityCard {
   traitBias: Partial<Record<TraitKey, number>>;
 }
 
+export interface CompanyRelationshipSeed {
+  companyId: string;
+  relationship: string;
+  tension: string;
+}
+
+export interface CompanyNarrativeTrigger {
+  id: string;
+  when: string;
+  storyBeat: string;
+  tags: string[];
+}
+
+export interface CompanyNarrativeArc {
+  id: string;
+  title: string;
+  premise: string;
+  triggerTags: string[];
+  beats: string[];
+  unresolvedQuestion: string;
+}
+
+export interface CompanyEnding {
+  id: string;
+  title: string;
+  legend: string;
+  condition: string;
+}
+
+export interface CompanyNarrative {
+  identity: string;
+  coreDesire: string;
+  greatestStrength: string;
+  fatalFlaw: string;
+  hiddenTruth: string;
+  secretOpportunity: string;
+  secretWeakness: string;
+  moralDilemma: string;
+  longTermAmbition: string;
+  fear: string;
+  founderStory: string;
+  rivals: CompanyRelationshipSeed[];
+  allies: CompanyRelationshipSeed[];
+  relationshipHooks: string[];
+  macroTriggers: CompanyNarrativeTrigger[];
+  crisisArcs: CompanyNarrativeArc[];
+  comebackArcs: CompanyNarrativeArc[];
+  legendaryEndings: CompanyEnding[];
+  hiddenEndings: CompanyEnding[];
+  eventTriggers: CompanyNarrativeTrigger[];
+}
+
 export interface CompanyConfig {
   id: string;
   name: string;
@@ -106,6 +158,7 @@ export interface CompanyConfig {
   flaw: string;
   story: string;
   decisionQuestion: string;
+  narrative: CompanyNarrative;
   archetype: ArchetypeKey;
   industry: IndustryThemeKey;
   region: RegionKey;
