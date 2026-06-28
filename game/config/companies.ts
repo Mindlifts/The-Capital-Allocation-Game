@@ -1,4 +1,5 @@
 import type { CompanyConfig } from "../types";
+import { companyNarratives } from "./companyNarratives";
 
 export const companies: CompanyConfig[] = [
   {
@@ -7,6 +8,7 @@ export const companies: CompanyConfig[] = [
     role: "Veteran Builder", desire: "Wants to prove the old team still has one great build left.", flaw: "Can confuse experience with inevitability.",
     story: "Aurora is led by veterans who have built difficult mines before. They believe this remote district can become their final masterpiece—but reputation may be making them underestimate how much has changed.",
     decisionQuestion: "Are you backing proven builders, or paying for the memory of who they used to be?",
+    narrative: companyNarratives["aurora-metals"],
     traits: { builderDna: 9, geologicalLuck: 7, balanceSheet: 6, managementQuality: 8, infrastructure: 5, politicalRisk: 4, marketHype: 6, commodityExposure: 8, optionality: 7, executionSkill: 9 },
     initiallyVisible: ["builderDna", "managementQuality", "marketHype", "politicalRisk"],
   },
@@ -16,6 +18,7 @@ export const companies: CompanyConfig[] = [
     role: "Quiet Provider", desire: "Wants patience to notice boring durability.", flaw: "Rarely gives the player a heroic story.",
     story: "Ironwood sells ordinary material from an operation that keeps producing cash while louder companies make promises. It is dependable, ignored, and unlikely to become the most exciting character in the room.",
     decisionQuestion: "Is quiet durability an advantage—or are you choosing safety because the harder opportunities frighten you?",
+    narrative: companyNarratives["ironwood-resources"],
     traits: { builderDna: 6, geologicalLuck: 6, balanceSheet: 9, managementQuality: 7, infrastructure: 8, politicalRisk: 3, marketHype: 2, commodityExposure: 7, optionality: 3, executionSkill: 8 },
     initiallyVisible: ["balanceSheet", "infrastructure", "marketHype", "commodityExposure"],
   },
@@ -25,6 +28,7 @@ export const companies: CompanyConfig[] = [
     role: "Glittering Mystery", desire: "Wants someone to believe before proof arrives.", flaw: "Burns attention and capital at the same temperature.",
     story: "Silver Mammoth may be sitting above an extraordinary deposit. It also has little cash, weak infrastructure, and just enough early evidence to make intelligent people imagine the best possible ending.",
     decisionQuestion: "Are you funding a rare discovery before the crowd—or financing a beautiful story before the facts exist?",
+    narrative: companyNarratives["silver-mammoth"],
     traits: { builderDna: 3, geologicalLuck: 9, balanceSheet: 2, managementQuality: 5, infrastructure: 3, politicalRisk: 6, marketHype: 9, commodityExposure: 9, optionality: 10, executionSkill: 3 },
     initiallyVisible: ["geologicalLuck", "balanceSheet", "marketHype", "optionality"],
   },
@@ -34,6 +38,7 @@ export const companies: CompanyConfig[] = [
     role: "Sleeping Colossus", desire: "Wants the world to need what it already has.", flaw: "May stay early longer than the player stays brave.",
     story: "Borealis controls a remote strategic energy asset that the market once cared about and then forgot. It does not need a new discovery; it needs demand to return before its long wait exhausts its supporters.",
     decisionQuestion: "Is this neglected strategic supply—or capital trapped inside a story that is always one cycle away?",
+    narrative: companyNarratives["borealis-energy"],
     traits: { builderDna: 5, geologicalLuck: 8, balanceSheet: 6, managementQuality: 6, infrastructure: 4, politicalRisk: 5, marketHype: 4, commodityExposure: 10, optionality: 8, executionSkill: 5 },
     initiallyVisible: ["geologicalLuck", "balanceSheet", "commodityExposure", "politicalRisk"],
   },
@@ -43,6 +48,7 @@ export const companies: CompanyConfig[] = [
     role: "Strategic Prize", desire: "Wants to become too useful for the world to ignore.", flaw: "Attracts rumors before it earns trust.",
     story: "TerraNova owns something larger empires may eventually need. That strategic importance attracts partners, speculators, and takeover rumors long before the company has proved it can finish the work alone.",
     decisionQuestion: "Would you still believe in TerraNova if no larger empire ever came to rescue it?",
+    narrative: companyNarratives["terranova-copper"],
     traits: { builderDna: 7, geologicalLuck: 8, balanceSheet: 5, managementQuality: 7, infrastructure: 6, politicalRisk: 4, marketHype: 7, commodityExposure: 9, optionality: 9, executionSkill: 6 },
     initiallyVisible: ["geologicalLuck", "managementQuality", "commodityExposure", "marketHype"],
   },
@@ -52,6 +58,7 @@ export const companies: CompanyConfig[] = [
     role: "Charming Survivor", desire: "Wants one more chance, and then one more after that.", flaw: "Confuses survival with progress.",
     story: "EmberRock has survived every crisis by finding another lender, another plan, and another reason the next chapter will be different. Its talent for staying alive is real. Evidence of genuine progress is harder to find.",
     decisionQuestion: "Is survival buying time for a turnaround—or merely postponing the same failure?",
+    narrative: companyNarratives["emberrock-mining"],
     traits: { builderDna: 3, geologicalLuck: 4, balanceSheet: 1, managementQuality: 3, infrastructure: 6, politicalRisk: 5, marketHype: 7, commodityExposure: 6, optionality: 5, executionSkill: 2 },
     initiallyVisible: ["balanceSheet", "infrastructure", "marketHype", "politicalRisk"],
   },
@@ -61,6 +68,7 @@ export const companies: CompanyConfig[] = [
     role: "Map Changer", desire: "Wants one road, one line, one practical unlock.", flaw: "Its fate depends on pieces it does not control.",
     story: "BluePeak has a credible asset and a capable team, but its future depends on roads, water, and power infrastructure controlled by other people. One connection could transform it; one delay could strand it.",
     decisionQuestion: "Are you backing the company—or gambling that the surrounding world will cooperate?",
+    narrative: companyNarratives["bluepeak-minerals"],
     traits: { builderDna: 6, geologicalLuck: 7, balanceSheet: 6, managementQuality: 7, infrastructure: 9, politicalRisk: 3, marketHype: 3, commodityExposure: 8, optionality: 6, executionSkill: 7 },
     initiallyVisible: ["infrastructure", "managementQuality", "politicalRisk", "balanceSheet"],
   },
@@ -70,6 +78,7 @@ export const companies: CompanyConfig[] = [
     role: "Hidden Lever", desire: "Wants the patient player to notice indirect power.", flaw: "Looks smaller than the optionality it controls.",
     story: "Helio owns a modest-looking license that gives it a claim on other companies’ future success. It does not need to build the winning project itself—but its indirect value is easy to overlook and difficult to price.",
     decisionQuestion: "Have you found hidden leverage, or are you assigning value to possibilities nobody is obligated to deliver?",
+    narrative: companyNarratives["helio-rare-earths"],
     traits: { builderDna: 4, geologicalLuck: 6, balanceSheet: 8, managementQuality: 8, infrastructure: 5, politicalRisk: 4, marketHype: 5, commodityExposure: 7, optionality: 9, executionSkill: 7 },
     initiallyVisible: ["balanceSheet", "managementQuality", "optionality", "marketHype"],
   },
