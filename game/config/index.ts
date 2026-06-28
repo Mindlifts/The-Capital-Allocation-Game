@@ -5,6 +5,7 @@ export * from "./events";
 export * from "./eventKnowledge";
 export * from "./industries";
 export * from "./investorCards";
+export * from "./narrativeFramework";
 export * from "./opportunities";
 export * from "./philosophies";
 export * from "./regions";

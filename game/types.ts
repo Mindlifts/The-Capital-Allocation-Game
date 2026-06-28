@@ -102,6 +102,31 @@ export interface CompanyRelationshipSeed {
   tension: string;
 }
 
+export interface NarrativeStakeholder {
+  name: string;
+  role: "supplier" | "regulator" | "customer" | "founder" | "community" | "government";
+  leverage: string;
+  tension: string;
+}
+
+export type CompanyPersonalityArchetype =
+  | "visionary" | "survivor" | "empire" | "pirate" | "bureaucrat"
+  | "inventor" | "speculator" | "family-business" | "fallen-giant" | "rebel"
+  | "cult-company" | "silent-compounder" | "monopoly" | "explorer" | "gambler"
+  | "perfectionist" | "opportunist" | "missionary" | "engineer" | "story-stock";
+
+export type StoryArcCategory =
+  | "growth" | "crisis" | "leadership" | "technology" | "competition"
+  | "macro" | "reputation" | "unexpected" | "opportunity";
+
+export interface NarrativeVariableRule {
+  id: string;
+  variable: string;
+  condition: string;
+  consequence: string;
+  affectedRelationships: string[];
+}
+
 export interface CompanyNarrativeTrigger {
   id: string;
   when: string;
@@ -126,10 +151,18 @@ export interface CompanyEnding {
 }
 
 export interface CompanyNarrative {
+  frameworkVersion: 2;
   identity: string;
+  personalityArchetype: CompanyPersonalityArchetype;
+  belief: string;
   coreDesire: string;
   greatestStrength: string;
   fatalFlaw: string;
+  companyCulture: string;
+  investorExcitement: string;
+  investorHesitation: string;
+  biggestCatalyst: string;
+  biggestUnknown: string;
   hiddenTruth: string;
   secretOpportunity: string;
   secretWeakness: string;
@@ -137,15 +170,20 @@ export interface CompanyNarrative {
   longTermAmbition: string;
   fear: string;
   founderStory: string;
+  currentChapter: string;
+  futurePossibilities: string[];
   rivals: CompanyRelationshipSeed[];
   allies: CompanyRelationshipSeed[];
+  stakeholders: NarrativeStakeholder[];
   relationshipHooks: string[];
+  narrativeVariables: NarrativeVariableRule[];
   macroTriggers: CompanyNarrativeTrigger[];
   crisisArcs: CompanyNarrativeArc[];
   comebackArcs: CompanyNarrativeArc[];
   legendaryEndings: CompanyEnding[];
   hiddenEndings: CompanyEnding[];
   eventTriggers: CompanyNarrativeTrigger[];
+  arcCategories: Partial<Record<StoryArcCategory, CompanyNarrativeArc[]>>;
 }
 
 export interface CompanyConfig {
@@ -153,6 +191,8 @@ export interface CompanyConfig {
   name: string;
   ticker: string;
   tagline: string;
+  logoStyle: string;
+  headquarters: string;
   role: string;
   desire: string;
   flaw: string;

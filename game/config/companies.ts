@@ -5,6 +5,7 @@ export const companies: CompanyConfig[] = [
   {
     id: "aurora-metals", name: "Aurora Metals", ticker: "AURM", commodity: "Gold", archetype: "mine-builder-mafia", industry: "mining", region: "mountain-kingdom",
     tagline: "Old hands, new district, very expensive promises.", basePrice: 24, volatility: 0.16,
+    logoStyle: "A weathered mountain monogram stamped in brass", headquarters: "Highcourt, Mountain Kingdom",
     role: "Veteran Builder", desire: "Wants to prove the old team still has one great build left.", flaw: "Can confuse experience with inevitability.",
     story: "Aurora is led by veterans who have built difficult mines before. They believe this remote district can become their final masterpiece—but reputation may be making them underestimate how much has changed.",
     decisionQuestion: "Are you backing proven builders, or paying for the memory of who they used to be?",
@@ -15,6 +16,7 @@ export const companies: CompanyConfig[] = [
   {
     id: "ironwood-resources", name: "Ironwood Resources", ticker: "IRWD", commodity: "Iron", archetype: "cash-cow", industry: "mining", region: "stable-democracy",
     tagline: "Unfashionable ore. Unfashionably strong cash flow.", basePrice: 18, volatility: 0.09,
+    logoStyle: "A restrained iron tree in charcoal and cream", headquarters: "Greyhaven, Stable Democracy",
     role: "Quiet Provider", desire: "Wants patience to notice boring durability.", flaw: "Rarely gives the player a heroic story.",
     story: "Ironwood sells ordinary material from an operation that keeps producing cash while louder companies make promises. It is dependable, ignored, and unlikely to become the most exciting character in the room.",
     decisionQuestion: "Is quiet durability an advantage—or are you choosing safety because the harder opportunities frighten you?",
@@ -25,6 +27,7 @@ export const companies: CompanyConfig[] = [
   {
     id: "silver-mammoth", name: "Silver Mammoth", ticker: "MAMT", commodity: "Silver", archetype: "lottery-ticket", industry: "mining", region: "emerging-frontier",
     tagline: "A colossal target beneath a very small treasury.", basePrice: 7, volatility: 0.28,
+    logoStyle: "A silver mammoth drawn like a frontier banknote", headquarters: "New Meridian, Emerging Frontier",
     role: "Glittering Mystery", desire: "Wants someone to believe before proof arrives.", flaw: "Burns attention and capital at the same temperature.",
     story: "Silver Mammoth may be sitting above an extraordinary deposit. It also has little cash, weak infrastructure, and just enough early evidence to make intelligent people imagine the best possible ending.",
     decisionQuestion: "Are you funding a rare discovery before the crowd—or financing a beautiful story before the facts exist?",
@@ -35,6 +38,7 @@ export const companies: CompanyConfig[] = [
   {
     id: "borealis-energy", name: "Borealis Energy", ticker: "BORE", commodity: "Uranium", archetype: "sleeping-giant", industry: "energy", region: "arctic-province",
     tagline: "A stranded asset waiting for the cycle to remember it.", basePrice: 14, volatility: 0.19,
+    logoStyle: "A northern star trapped inside a dark energy ring", headquarters: "Northglass, Arctic Province",
     role: "Sleeping Colossus", desire: "Wants the world to need what it already has.", flaw: "May stay early longer than the player stays brave.",
     story: "Borealis controls a remote strategic energy asset that the market once cared about and then forgot. It does not need a new discovery; it needs demand to return before its long wait exhausts its supporters.",
     decisionQuestion: "Is this neglected strategic supply—or capital trapped inside a story that is always one cycle away?",
@@ -45,6 +49,7 @@ export const companies: CompanyConfig[] = [
   {
     id: "terranova-copper", name: "TerraNova Copper", ticker: "TNVC", commodity: "Copper", archetype: "future-takeover", industry: "infrastructure", region: "coastal-republic",
     tagline: "Too strategic to ignore, too early to trust.", basePrice: 21, volatility: 0.18,
+    logoStyle: "A copper compass rose with imperial geometry", headquarters: "Port Azure, Coastal Republic",
     role: "Strategic Prize", desire: "Wants to become too useful for the world to ignore.", flaw: "Attracts rumors before it earns trust.",
     story: "TerraNova owns something larger empires may eventually need. That strategic importance attracts partners, speculators, and takeover rumors long before the company has proved it can finish the work alone.",
     decisionQuestion: "Would you still believe in TerraNova if no larger empire ever came to rescue it?",
@@ -55,6 +60,7 @@ export const companies: CompanyConfig[] = [
   {
     id: "emberrock-mining", name: "EmberRock Mining", ticker: "EMBR", commodity: "Nickel", archetype: "zombie-miner", industry: "recycling", region: "post-industrial-belt",
     tagline: "A turnaround, according to the seventh turnaround deck.", basePrice: 5, volatility: 0.23,
+    logoStyle: "A cracked ember refusing to go dark", headquarters: "Cinder Row, Post-Industrial Belt",
     role: "Charming Survivor", desire: "Wants one more chance, and then one more after that.", flaw: "Confuses survival with progress.",
     story: "EmberRock has survived every crisis by finding another lender, another plan, and another reason the next chapter will be different. Its talent for staying alive is real. Evidence of genuine progress is harder to find.",
     decisionQuestion: "Is survival buying time for a turnaround—or merely postponing the same failure?",
@@ -65,6 +71,7 @@ export const companies: CompanyConfig[] = [
   {
     id: "bluepeak-minerals", name: "BluePeak Minerals", ticker: "BLUE", commodity: "Copper", archetype: "infrastructure-winner", industry: "water", region: "desert-corridor",
     tagline: "One transmission line away from becoming investable.", basePrice: 13, volatility: 0.15,
+    logoStyle: "A blue summit crossed by one clean utility line", headquarters: "Solace Junction, Desert Corridor",
     role: "Map Changer", desire: "Wants one road, one line, one practical unlock.", flaw: "Its fate depends on pieces it does not control.",
     story: "BluePeak has a credible asset and a capable team, but its future depends on roads, water, and power infrastructure controlled by other people. One connection could transform it; one delay could strand it.",
     decisionQuestion: "Are you backing the company—or gambling that the surrounding world will cooperate?",
@@ -75,6 +82,7 @@ export const companies: CompanyConfig[] = [
   {
     id: "helio-rare-earths", name: "Helio Rare Earths", ticker: "HLIO", commodity: "Rare Earths", archetype: "hidden-royalty", industry: "technology", region: "trade-city",
     tagline: "A peculiar license with more leverage than it appears.", basePrice: 16, volatility: 0.14,
+    logoStyle: "A small golden sun casting an impossibly long shadow", headquarters: "Lumen Exchange, Trade City",
     role: "Hidden Lever", desire: "Wants the patient player to notice indirect power.", flaw: "Looks smaller than the optionality it controls.",
     story: "Helio owns a modest-looking license that gives it a claim on other companies’ future success. It does not need to build the winning project itself—but its indirect value is easy to overlook and difficult to price.",
     decisionQuestion: "Have you found hidden leverage, or are you assigning value to possibilities nobody is obligated to deliver?",
