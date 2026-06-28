@@ -1,5 +1,6 @@
 import type { CompanyConfig } from "../types";
 import { companyNarratives } from "./companyNarratives";
+import { expandedCompanies } from "./expandedCompanies";
 
 export const companies: CompanyConfig[] = [
   {
@@ -90,4 +91,5 @@ export const companies: CompanyConfig[] = [
     traits: { builderDna: 4, geologicalLuck: 6, balanceSheet: 8, managementQuality: 8, infrastructure: 5, politicalRisk: 4, marketHype: 5, commodityExposure: 7, optionality: 9, executionSkill: 7 },
     initiallyVisible: ["balanceSheet", "managementQuality", "optionality", "marketHype"],
   },
+  ...expandedCompanies,
 ];
