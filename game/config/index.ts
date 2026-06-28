@@ -2,6 +2,7 @@ export * from "./archetypes";
 export * from "./companies";
 export * from "./companyNarratives";
 export * from "./events";
+export * from "./expandedCompanies";
 export * from "./eventKnowledge";
 export * from "./industries";
 export * from "./investorCards";
