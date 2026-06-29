@@ -859,6 +859,38 @@ export function setPositionValue(
   };
 }
 
+export function adjustHoldingDuringOpportunity(
+  state: GameState,
+  companyId: string,
+  mode: "trim" | "sell",
+): GameState {
+  if (state.phase !== "opportunity") return state;
+  const currentValue = positionValue(state, companyId);
+  if (currentValue <= 0) return state;
+  const company = state.companies.find((item) => item.id === companyId);
+  if (!company) return state;
+  const targetValue = mode === "trim" ? currentValue * 0.75 : 0;
+  const adjusted = setPositionValue({ ...state, phase: "commit" }, companyId, targetValue);
+  if (adjusted === state || adjusted.phase !== "commit") return state;
+  return {
+    ...adjusted,
+    phase: "opportunity",
+    pendingOpportunityAction: null,
+    actionUsed: false,
+    moments: [
+      moment(
+        mode === "trim" ? "perfect-timing" : "critical",
+        mode === "trim" ? "Capital Freed" : "Position Exited",
+        mode === "trim"
+          ? `You trimmed ${company.name} before choosing the next opportunity. Now the decision has room to breathe.`
+          : `You exited ${company.name}. The capital is available, but the story may continue without you.`,
+        mode === "trim" ? "positive" : "neutral",
+      ),
+      ...adjusted.moments.slice(0, 2),
+    ],
+  };
+}
+
 function useAction(
   state: GameState,
   action: PlayerAction,

@@ -8,6 +8,7 @@ import {
   confirmOpportunityReason,
   continueTurn,
   currentOpportunity,
+  adjustHoldingDuringOpportunity,
   draftInvestorCard,
   inferPhilosophyProgression,
   initializeGame,
@@ -351,6 +352,16 @@ export default function CapitalGamePage() {
   const unlock = philosophyUnlock(state);
   const totalValue = netWorth(state);
   const investedValue = portfolioValue(state);
+  const holdings = state.portfolio
+    .map((position) => {
+      const holdingCompany = state.companies.find((item) => item.id === position.companyId);
+      if (!holdingCompany) return null;
+      return {
+        company: holdingCompany,
+        value: positionValue(state, holdingCompany.id),
+      };
+    })
+    .filter((holding): holding is { company: CompanyState; value: number } => Boolean(holding && holding.value > 0));
   const owned = company ? positionValue(state, company.id) > 0 : false;
   const hiddenCount = company ? hiddenLabels(company).length : 0;
   const actionOptions: OpportunityActionType[] = owned
@@ -438,7 +449,9 @@ export default function CapitalGamePage() {
               <h3>{company?.name ?? "Opportunity"} asks for a decision.</h3>
               <div className="action-grid">
                 {actionOptions.map((action) => {
-                  const disabled = action === "research" && (state.resources.attention < 1 || hiddenCount === 0);
+                  const disabled =
+                    (action === "research" && (state.resources.attention < 1 || hiddenCount === 0)) ||
+                    (action === "invest" && state.resources.capital < 1);
                   return (
                     <button
                       type="button"
@@ -447,11 +460,44 @@ export default function CapitalGamePage() {
                       onClick={() => setState((current) => current ? chooseOpportunityAction(current, action) : current)}
                     >
                       <b>{actionCopy[action].icon} {action === "invest" && owned ? "Increase" : actionCopy[action].label}</b>
-                      <span>{disabled ? "No hidden trait or Attention left." : actionCopy[action].hint}</span>
+                      <span>{action === "invest" && state.resources.capital < 1 ? "No liquid capital. Trim a holding below or stay invested." : disabled ? "No hidden trait or Attention left." : actionCopy[action].hint}</span>
                     </button>
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {holdings.length > 0 && state.phase === "opportunity" && (
+            <div className="panel-card holdings-panel">
+              <span className="eyebrow">YOUR HOLDINGS</span>
+              <h3>Free capital or stay invested.</h3>
+              <p>You can rebalance before judging this opportunity. Trimming does not consume the decision.</p>
+              <div className="holding-list">
+                {holdings.map(({ company: holdingCompany, value }) => (
+                  <div className="holding-row" key={holdingCompany.id}>
+                    <div>
+                      <strong>{holdingCompany.name}</strong>
+                      <span>{capital(value)} committed · {holdingCompany.recentChange >= 0 ? "+" : ""}{(holdingCompany.recentChange * 100).toFixed(1)}%</span>
+                    </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setState((current) => current ? adjustHoldingDuringOpportunity(current, holdingCompany.id, "trim") : current)}
+                      >
+                        Trim 25%
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setState((current) => current ? adjustHoldingDuringOpportunity(current, holdingCompany.id, "sell") : current)}
+                      >
+                        Exit
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="stay-invested-note">Or do nothing here: staying invested is a valid choice.</div>
             </div>
           )}
 
