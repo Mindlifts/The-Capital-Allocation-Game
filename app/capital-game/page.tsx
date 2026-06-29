@@ -264,7 +264,7 @@ export default function CapitalGamePage() {
           <span className="eyebrow">THE WORLD WILL REMEMBER WHAT YOU BELIEVED</span>
           <h1>Back a character.<br />Become a philosophy.</h1>
           <p>
-            Eight fictional companies enter with ambition, secrets, and something to prove. Choose who deserves your conviction. Then live with what the world does to them.
+            Forty fictional company-characters wait behind the door. Each run reveals only a few. Choose who deserves your conviction, then live with what the world does to them.
           </p>
           <div className="identity-hook">Will you become a <span>Builder</span>, Contrarian, Compounder—or Hype Chaser?</div>
           <button type="button" className="primary-button large" onClick={() => setScreen("philosophy")}>

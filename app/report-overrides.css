@@ -102,3 +102,94 @@
   .result-footer { padding: 10px 16px max(10px, env(safe-area-inset-bottom)); }
   .remaining-resources { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Modal scroll fix: the page must never feel frozen on mobile. */
+.event-backdrop {
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-items: start;
+  justify-items: center;
+  padding-block: 18px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.event-card,
+.result-card {
+  margin-block: auto;
+}
+
+.event-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-card .primary-button {
+  flex: 0 0 auto;
+  bottom: max(0px, env(safe-area-inset-bottom));
+}
+
+.result-card {
+  min-height: 0;
+}
+
+@media (max-width: 760px) {
+  .event-explainer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-description {
+    font-size: 15px;
+  }
+
+  .event-card h2 {
+    font-size: clamp(30px, 10vw, 44px);
+  }
+}
+
+@media (max-width: 560px) {
+  .event-backdrop {
+    place-items: start center;
+    padding: 8px;
+  }
+
+  .event-card,
+  .result-card {
+    margin-block: 0;
+  }
+
+  .event-card {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    padding: 22px 16px 14px;
+  }
+
+  .event-art {
+    width: min(150px, 50vw);
+    height: 108px;
+    margin-block: 12px;
+  }
+
+  .event-label,
+  .event-kicker {
+    font-size: 7px;
+    letter-spacing: .14em;
+  }
+
+  .event-explainer-grid {
+    gap: 7px;
+    margin-top: 12px;
+  }
+
+  .event-explainer-grid > div {
+    padding: 12px;
+  }
+
+  .event-explainer-grid p,
+  .plain-effects li {
+    font-size: 13px;
+  }
+
+  .event-decision-prompt strong {
+    font-size: 15px;
+  }
+}

@@ -2309,3 +2309,157 @@ body::before {
   .onboarding-card h2 { font-size: 27px; }
   .briefing-dots { margin: 13px 0; }
 }
+
+/* Mobile playability pass — keep the choice reachable and never trap scrolling. */
+html,
+body {
+  overscroll-behavior-y: auto;
+  touch-action: manipulation;
+}
+
+.focused-game-shell {
+  overflow-x: clip;
+}
+
+@media (max-width: 860px) {
+  .focused-resource-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .focused-command {
+    margin-top: 12px;
+  }
+
+  .focused-command h2 {
+    font-size: clamp(24px, 7vw, 34px);
+    line-height: 1.08;
+  }
+
+  .opportunity-scene {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .decision-panel {
+    order: -1;
+    position: sticky;
+    top: calc(var(--mobile-header-height, 132px) + 8px);
+    z-index: 14;
+    gap: 8px;
+    padding-bottom: 0;
+  }
+
+  .decision-panel .philosophy-pulse,
+  .decision-panel .memo-stack {
+    display: none;
+  }
+
+  .decision-panel .action-stage {
+    border-color: rgba(244,214,133,.38);
+    background:
+      linear-gradient(180deg, rgba(15,20,21,.98), rgba(7,10,12,.96)),
+      #080c0e;
+    box-shadow: 0 18px 48px rgba(0,0,0,.42);
+  }
+
+  .action-stage h3 {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .action-stage p {
+    font-size: 12px;
+  }
+
+  .action-grid,
+  .reason-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 10px;
+  }
+
+  .action-grid button,
+  .reason-grid button {
+    min-height: 54px;
+    padding: 11px;
+  }
+
+  .action-grid b {
+    font-size: 13px;
+  }
+
+  .action-grid span {
+    font-size: 10px;
+  }
+
+  .focused-card {
+    contain: layout paint;
+  }
+}
+
+@media (max-width: 560px) {
+  .focused-resource-header {
+    --mobile-header-height: 126px;
+  }
+
+  .focused-resource-header .resource small {
+    font-size: 6.5px;
+    letter-spacing: 0;
+  }
+
+  .focused-resource-header .resource strong {
+    font-size: 12px;
+  }
+
+  .focused-command {
+    margin-top: 10px;
+  }
+
+  .compact-portfolio {
+    display: none;
+  }
+
+  .decision-panel {
+    top: 126px;
+  }
+
+  .panel-card {
+    padding: 13px;
+  }
+
+  .reason-grid {
+    grid-template-columns: 1fr;
+    max-height: 44dvh;
+    overflow-y: auto;
+    padding-bottom: 2px;
+    scrollbar-gutter: stable;
+  }
+
+  .action-grid button,
+  .reason-grid button {
+    min-height: 52px;
+    border-radius: 10px;
+  }
+
+  .focused-card {
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .company-art-window {
+    height: clamp(150px, 28vh, 210px);
+  }
+
+  .focused-title-row h1 {
+    font-size: clamp(34px, 12vw, 44px);
+    line-height: .96;
+  }
+
+  .company-story {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+}
