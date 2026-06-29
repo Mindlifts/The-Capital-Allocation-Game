@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { eventKnowledge, industryMap, plainEffectLines, regionMap } from "../config";
 import type { GameState } from "../types";
 import { MomentStack } from "./MomentStack";
@@ -49,12 +48,6 @@ export function EventOverlay({
   const unresolvedLine = focalCompany
     ? `${focalCompany.name} still ${focalCompany.desire.toLowerCase()} Yet it ${focalFlaw} ${knowledge.decisionPrompt}`
     : knowledge.decisionPrompt;
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previousOverflow; };
-  }, []);
 
   return (
     <div className="event-backdrop">
